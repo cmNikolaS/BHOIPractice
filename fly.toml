@@ -1,10 +1,13 @@
 # Fly.io configuration for BHOI Arhiva.
-# Change `app` to a unique name (or let `fly launch` set it), then:
-#   fly apps create <name>
-#   fly volumes create bhoi_data --size 1 --region fra
-#   fly deploy
-app = "bhoi-arhiva"
-primary_region = "fra"   # Frankfurt — close to BiH; change if you like
+#
+# IMPORTANT: this app stores its database as a SQLite file on the volume,
+# so it must run as a SINGLE machine (one volume). Deploy with --ha=false.
+#
+# One-time setup:
+#   fly volumes create bhoi_data --size 1 --region ams   # match primary_region
+#   fly deploy --ha=false
+app = "bhoipractice"
+primary_region = "ams"   # Amsterdam (where this app was created)
 
 [build]
 
