@@ -17,7 +17,13 @@ $pdo = db();
 
 // --- Reference data for the filter controls ---------------------------
 $levels = $pdo->query('SELECT id, name, slug FROM levels ORDER BY sort_order DESC')->fetchAll();
-$tags   = $pdo->query('SELECT id, name, slug FROM tags ORDER BY name')->fetchAll();
+// Only categories that are actually used by at least one task (no dead options).
+$tags = $pdo->query('
+    SELECT DISTINCT tg.id, tg.name, tg.slug
+    FROM tags tg
+    JOIN task_tags tt ON tt.tag_id = tg.id
+    ORDER BY tg.name
+')->fetchAll();
 $years  = $pdo->query('SELECT DISTINCT year FROM tasks ORDER BY year DESC')->fetchAll(PDO::FETCH_COLUMN);
 
 // --- Tasks (with level + solution count) ------------------------------
@@ -252,5 +258,6 @@ require __DIR__ . '/includes/header.php';
     </div>
 </section>
 
-<script src="<?= e(url('assets/app.js')) ?>" defer></script>
+<?php $appVer = @filemtime(__DIR__ . '/assets/app.js') ?: time(); ?>
+<script src="<?= e(url('assets/app.js?v=' . $appVer)) ?>" defer></script>
 <?php require __DIR__ . '/includes/footer.php'; ?>
