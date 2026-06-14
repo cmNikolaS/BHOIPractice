@@ -68,7 +68,8 @@ try {
         $stmt = $pdo->prepare("
             UPDATE tasks SET
                 title = ?, slug = ?, statement = ?, year = ?, level_id = ?,
-                difficulty = ?, problem_index = ?, time_limit_ms = ?, memory_limit_mb = ?
+                difficulty = ?, problem_index = ?, time_limit_ms = ?, memory_limit_mb = ?,
+                updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
         ");
         $stmt->execute([

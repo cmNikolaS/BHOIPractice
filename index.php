@@ -20,24 +20,32 @@ $levels = $pdo->query('SELECT id, name, slug FROM levels ORDER BY sort_order')->
 $tags   = $pdo->query('SELECT id, name, slug FROM tags ORDER BY name')->fetchAll();
 $years  = $pdo->query('SELECT DISTINCT year FROM tasks ORDER BY year DESC')->fetchAll(PDO::FETCH_COLUMN);
 
-// --- Tasks (with level + aggregated tags + solution count) ------------
+// --- Tasks (with level + solution count) ------------------------------
 $sql = "
     SELECT
         t.id, t.title, t.slug, t.year, t.difficulty, t.problem_index,
         t.pdf_path, t.tests_path,
         l.name  AS level_name,
         l.slug  AS level_slug,
-        GROUP_CONCAT(DISTINCT tg.name ORDER BY tg.name SEPARATOR '||') AS tag_names,
-        GROUP_CONCAT(DISTINCT tg.slug ORDER BY tg.slug SEPARATOR '||') AS tag_slugs,
-        (SELECT COUNT(*) FROM solutions s WHERE s.task_id = t.id)       AS solution_count
+        (SELECT COUNT(*) FROM solutions s WHERE s.task_id = t.id) AS solution_count
     FROM tasks t
-    JOIN levels l       ON l.id = t.level_id
-    LEFT JOIN task_tags tt ON tt.task_id = t.id
-    LEFT JOIN tags tg      ON tg.id = tt.tag_id
-    GROUP BY t.id
+    JOIN levels l ON l.id = t.level_id
     ORDER BY t.year DESC, l.sort_order DESC, t.problem_index ASC, t.title ASC
 ";
 $tasks = $pdo->query($sql)->fetchAll();
+
+// Tags grouped per task (separate query keeps the SQL portable across
+// MySQL and SQLite — no GROUP_CONCAT dialect differences).
+$tagsByTask = [];
+$tagRows = $pdo->query("
+    SELECT tt.task_id, tg.name, tg.slug
+    FROM task_tags tt
+    JOIN tags tg ON tg.id = tt.tag_id
+    ORDER BY tg.name
+")->fetchAll();
+foreach ($tagRows as $tr) {
+    $tagsByTask[$tr['task_id']][] = ['name' => $tr['name'], 'slug' => $tr['slug']];
+}
 
 $page_title = 'Zadaci';
 require __DIR__ . '/includes/header.php';
@@ -128,8 +136,9 @@ require __DIR__ . '/includes/header.php';
             </thead>
             <tbody id="task-rows" class="divide-y divide-slate-100">
                 <?php foreach ($tasks as $t):
-                    $tagNames = $t['tag_names'] ? explode('||', $t['tag_names']) : [];
-                    $tagSlugs = $t['tag_slugs'] ? explode('||', $t['tag_slugs']) : [];
+                    $taskTags = $tagsByTask[$t['id']] ?? [];
+                    $tagNames = array_column($taskTags, 'name');
+                    $tagSlugs = array_column($taskTags, 'slug');
                     $searchBlob = mb_strtolower($t['title'] . ' ' . $t['level_name'] . ' ' . implode(' ', $tagNames), 'UTF-8');
                     $taskUrl = url('task.php?id=' . (int) $t['id']);
                 ?>

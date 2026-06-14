@@ -9,6 +9,10 @@
 .env
 config.local.php
 
+# Local SQLite database + test scratch dirs
+/data/
+/_sqltest/
+
 # One-off import staging (git tree + logs)
 /_import/
 

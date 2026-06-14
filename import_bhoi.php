@@ -191,24 +191,30 @@ foreach ($paths as $p => $_) {
 sort($problemDirs);
 out('Found ' . count($problemDirs) . ' problems.');
 
+// Optional cap (handy for testing): IMPORT_LIMIT=5
+$limit = (int) (getenv('IMPORT_LIMIT') ?: 0);
+if ($limit > 0) {
+    $problemDirs = array_slice($problemDirs, 0, $limit);
+    out('IMPORT_LIMIT active: importing only ' . $limit . ' problems.');
+}
+
 /* --- reset levels + clean tasks, ensure tags ----------------------- */
 out('Resetting catalog (levels + tasks) ...');
-$pdo->exec('SET FOREIGN_KEY_CHECKS=0');
+// Delete child -> parent so foreign keys stay satisfied (no need to disable them).
 $pdo->exec('DELETE FROM solutions');
 $pdo->exec('DELETE FROM task_tags');
 $pdo->exec('DELETE FROM tasks');
 $pdo->exec('DELETE FROM levels');
-$pdo->exec('SET FOREIGN_KEY_CHECKS=1');
 
 $levelId = [];   // slug -> id
 function ensure_level(PDO $pdo, array &$cache, string $name, string $slug, int $sort): int {
     if (isset($cache[$slug])) return $cache[$slug];
-    $pdo->prepare('INSERT INTO levels (name, slug, sort_order) VALUES (?,?,?)
-                   ON DUPLICATE KEY UPDATE name=VALUES(name), sort_order=VALUES(sort_order)')
-        ->execute([$name, $slug, $sort]);
-    $id = (int) $pdo->lastInsertId();
+    $s = $pdo->prepare('SELECT id FROM levels WHERE slug = ?');
+    $s->execute([$slug]);
+    $id = (int) $s->fetchColumn();
     if ($id === 0) {
-        $s = $pdo->prepare('SELECT id FROM levels WHERE slug = ?'); $s->execute([$slug]); $id = (int) $s->fetchColumn();
+        $pdo->prepare('INSERT INTO levels (name, slug, sort_order) VALUES (?,?,?)')->execute([$name, $slug, $sort]);
+        $id = (int) $pdo->lastInsertId();
     }
     return $cache[$slug] = $id;
 }
@@ -230,7 +236,8 @@ $insTask = $pdo->prepare(
     'INSERT INTO tasks (title, slug, statement, year, level_id, difficulty, problem_index, time_limit_ms, memory_limit_mb, pdf_path)
      VALUES (?,?,?,?,?,?,?,?,?,?)'
 );
-$insTag = $pdo->prepare('INSERT IGNORE INTO task_tags (task_id, tag_id) VALUES (?,?)');
+$ignorePrefix = DB_DRIVER === 'sqlite' ? 'INSERT OR IGNORE' : 'INSERT IGNORE';
+$insTag = $pdo->prepare($ignorePrefix . ' INTO task_tags (task_id, tag_id) VALUES (?,?)');
 $insSol = $pdo->prepare('INSERT INTO solutions (task_id, language, original_name, file_path, file_size) VALUES (?,?,?,?,?)');
 
 $usedSlugs = [];

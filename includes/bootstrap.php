@@ -15,11 +15,14 @@ require_once __DIR__ . '/../config.php';
 //  Session (started once, with secure cookie flags)
 // ---------------------------------------------------------------------
 if (session_status() === PHP_SESSION_NONE) {
+    // Detect HTTPS directly, or via a reverse proxy (e.g. Fly.io / load balancers).
+    $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+
     session_set_cookie_params([
         'httponly' => true,
         'samesite' => 'Lax',
-        // Send the cookie only over HTTPS when the request is already HTTPS.
-        'secure'   => (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'),
+        'secure'   => $isHttps,
     ]);
     session_start();
 }

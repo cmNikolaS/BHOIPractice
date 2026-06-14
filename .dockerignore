@@ -1,0 +1,23 @@
+# Keep the build context small and clean.
+.git
+.github
+.gitattributes
+.gitignore
+.vscode
+_import
+_sqltest
+node_modules
+*.log
+
+# Uploaded files are regenerated into the image (/seed) and live on the
+# Fly volume at runtime — never ship the local copies.
+uploads/pdf/*
+uploads/solutions/*
+uploads/tests/*
+
+# Local-only helpers / data
+data
+preview.bat
+preview.ps1
+stop-preview.bat
+stop-preview.ps1

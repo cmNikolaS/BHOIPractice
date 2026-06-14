@@ -36,7 +36,7 @@ function admin_login(string $username, string $password): bool
         'display_name' => $admin['display_name'],
     ];
 
-    $upd = db()->prepare('UPDATE admins SET last_login_at = NOW() WHERE id = ?');
+    $upd = db()->prepare('UPDATE admins SET last_login_at = CURRENT_TIMESTAMP WHERE id = ?');
     $upd->execute([$admin['id']]);
 
     return true;
