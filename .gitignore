@@ -16,6 +16,9 @@ config.local.php
 # One-off import staging (git tree + logs)
 /_import/
 
+# Local preview launch config (machine-specific paths)
+/.claude/launch.json
+
 # Editor / OS noise
 .DS_Store
 Thumbs.db

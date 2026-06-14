@@ -40,48 +40,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prijava — <?= e(APP_NAME) ?></title>
-    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2032'%3E%3Crect%20width='32'%20height='32'%20rx='7'%20fill='%234f46e5'/%3E%3Ctext%20x='16'%20y='23'%20font-family='Arial'%20font-size='19'%20font-weight='bold'%20fill='white'%20text-anchor='middle'%3EB%3C/text%3E%3C/svg%3E">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter','ui-sans-serif','system-ui','sans-serif'] } } } };</script>
+    <?php require __DIR__ . '/includes/theme_head.php'; ?>
 </head>
-<body class="grid min-h-full place-items-center bg-slate-100 px-4 font-sans text-slate-800 antialiased">
+<body class="grid min-h-full place-items-center bg-bg px-4 font-sans text-fg antialiased">
 
     <div class="w-full max-w-sm">
         <div class="mb-6 text-center">
-            <span class="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-indigo-600 text-xl font-extrabold text-white shadow-sm">B</span>
-            <h1 class="text-xl font-extrabold tracking-tight text-slate-900"><?= e(APP_NAME) ?></h1>
-            <p class="text-sm text-slate-500">Prijava u administraciju</p>
+            <span class="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-brand text-xl font-extrabold text-[#1a1a1a] shadow-sm">B</span>
+            <h1 class="text-xl font-extrabold tracking-tight text-fg"><?= e(APP_NAME) ?></h1>
+            <p class="text-sm text-muted">Prijava u administraciju</p>
         </div>
 
         <form method="post" action="<?= e(url('admin_login.php')) ?>"
-              class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              class="rounded-2xl border border-line bg-card p-6 shadow-sm">
 
             <?= csrf_field() ?>
 
             <?php if ($error): ?>
-                <div class="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700 ring-1 ring-inset ring-red-600/20">
+                <div class="mb-4 rounded-xl bg-hard/15 px-4 py-3 text-sm font-medium text-hard ring-1 ring-inset ring-hard/30">
                     <?= e($error) ?>
                 </div>
             <?php endif; ?>
 
-            <label class="mb-1 block text-sm font-medium text-slate-700" for="username">Korisničko ime</label>
+            <label class="mb-1 block text-sm font-medium text-fg" for="username">Korisničko ime</label>
             <input id="username" name="username" type="text" autocomplete="username" required
                    value="<?= e($username) ?>"
-                   class="mb-4 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30">
+                   class="mb-4 w-full rounded-xl border border-line bg-elevated px-3 py-2.5 text-sm text-fg outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30">
 
-            <label class="mb-1 block text-sm font-medium text-slate-700" for="password">Lozinka</label>
+            <label class="mb-1 block text-sm font-medium text-fg" for="password">Lozinka</label>
             <input id="password" name="password" type="password" autocomplete="current-password" required
-                   class="mb-5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30">
+                   class="mb-5 w-full rounded-xl border border-line bg-elevated px-3 py-2.5 text-sm text-fg outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30">
 
             <button type="submit"
-                    class="w-full rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500/40">
+                    class="w-full rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:brightness-110 focus:ring-2 focus:ring-accent/40">
                 Prijava
             </button>
         </form>
 
-        <p class="mt-4 text-center text-sm text-slate-500">
-            <a href="<?= e(url('index.php')) ?>" class="transition hover:text-indigo-600">← Nazad na sajt</a>
+        <p class="mt-4 text-center text-sm text-muted">
+            <a href="<?= e(url('index.php')) ?>" class="transition hover:text-accent">← Nazad na sajt</a>
         </p>
     </div>
 

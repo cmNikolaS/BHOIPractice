@@ -2,9 +2,9 @@
 /**
  * task.php — Single task view with downloadable materials.
  * ----------------------------------------------------------------------
- * Renders the problem statement, metadata badges, the list of tags, and
- * download buttons for: the task PDF, each official solution, and the
- * test-case ZIP. Buttons appear only when the corresponding file exists.
+ * Renders the problem statement (Markdown), metadata badges, tags, a
+ * "mark as completed" toggle (localStorage, shared with the catalog), and
+ * download/preview actions for the PDF, official solutions and tests.
  */
 
 declare(strict_types=1);
@@ -17,7 +17,7 @@ if (!$id) {
     http_response_code(404);
     $page_title = 'Zadatak nije pronađen';
     require __DIR__ . '/includes/header.php';
-    echo '<p class="text-slate-600">Zadatak nije pronađen.</p>';
+    echo '<p class="text-muted">Zadatak nije pronađen.</p>';
     require __DIR__ . '/includes/footer.php';
     exit;
 }
@@ -39,7 +39,7 @@ if (!$task) {
     http_response_code(404);
     $page_title = 'Zadatak nije pronađen';
     require __DIR__ . '/includes/header.php';
-    echo '<p class="text-slate-600">Zadatak nije pronađen.</p>';
+    echo '<p class="text-muted">Zadatak nije pronađen.</p>';
     require __DIR__ . '/includes/footer.php';
     exit;
 }
@@ -70,10 +70,10 @@ require __DIR__ . '/includes/header.php';
 ?>
 
 <!-- Breadcrumb -->
-<nav class="mb-6 text-sm text-slate-500">
-    <a href="<?= e(url('index.php')) ?>" class="transition hover:text-indigo-600">Zadaci</a>
-    <span class="mx-1.5 text-slate-300">/</span>
-    <span class="text-slate-700"><?= e($task['title']) ?></span>
+<nav class="mb-6 text-sm text-muted">
+    <a href="<?= e(url('index.php')) ?>" class="transition hover:text-accent">Zadaci</a>
+    <span class="mx-1.5 opacity-50">/</span>
+    <span class="text-fg"><?= e($task['title']) ?></span>
 </nav>
 
 <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
@@ -84,30 +84,37 @@ require __DIR__ . '/includes/header.php';
                 <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset <?= level_badge($task['level_slug']) ?>">
                     <?= e($task['level_name']) ?>
                 </span>
-                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset <?= difficulty_badge($task['difficulty']) ?>">
+                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset <?= difficulty_badge($task['difficulty']) ?>">
                     <?= e($task['difficulty']) ?>
                 </span>
-                <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600 tabular-nums">
+                <span class="inline-flex items-center rounded-full bg-elevated px-2.5 py-0.5 text-xs font-medium text-muted tabular-nums">
                     <?= e((string) $task['year']) ?>
                 </span>
             </div>
-            <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">
+            <h1 class="text-3xl font-extrabold tracking-tight text-fg">
                 <?php if ($task['problem_index'] !== null && $task['problem_index'] !== ''): ?>
-                    <span class="text-slate-400"><?= e($task['problem_index']) ?>.</span>
+                    <span class="text-muted"><?= e($task['problem_index']) ?>.</span>
                 <?php endif; ?>
                 <?= e($task['title']) ?>
             </h1>
+
+            <!-- Mark as completed (localStorage, shared with the catalog) -->
+            <button id="mark-done" type="button" data-id="<?= (int) $task['id'] ?>"
+                    class="mt-4 inline-flex items-center gap-2 rounded-xl border border-line bg-card px-4 py-2 text-sm font-semibold text-muted transition hover:border-done/50 hover:text-fg">
+                <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 10l4 4 8-9"/></svg>
+                <span id="mark-done-label">Označi kao riješeno</span>
+            </button>
         </header>
 
         <!-- Problem statement: readable typography -->
-        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-            <h2 class="mb-4 text-xs font-semibold uppercase tracking-wide text-slate-400">Tekst zadatka</h2>
+        <div class="rounded-2xl border border-line bg-card p-6 shadow-sm sm:p-8">
+            <h2 class="mb-4 text-xs font-semibold uppercase tracking-wide text-muted">Tekst zadatka</h2>
             <?php if (trim((string) $task['statement']) !== ''): ?>
                 <!-- Raw Markdown, rendered + sanitised client-side into #statement-body -->
                 <textarea id="statement-md" hidden><?= e($task['statement']) ?></textarea>
-                <div id="statement-body" class="prose-task max-w-none text-[15px] leading-7 text-slate-700"></div>
+                <div id="statement-body" class="prose-task max-w-none text-[15px] leading-7 text-fg"></div>
             <?php else: ?>
-                <p class="text-slate-500">
+                <p class="text-muted">
                     Tekst nije unesen. Preuzmite PDF s desne strane za potpun opis zadatka.
                 </p>
             <?php endif; ?>
@@ -117,103 +124,103 @@ require __DIR__ . '/includes/header.php';
     <!-- ===== Sidebar ===== -->
     <aside class="space-y-6">
         <!-- Materials / downloads -->
-        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 class="mb-4 text-xs font-semibold uppercase tracking-wide text-slate-400">Materijali</h2>
+        <div class="rounded-2xl border border-line bg-card p-5 shadow-sm">
+            <h2 class="mb-4 text-xs font-semibold uppercase tracking-wide text-muted">Materijali</h2>
 
             <!-- PDF: open inline in a new tab, with a separate download link -->
             <?php if ($task['pdf_path']): ?>
-                <div class="mb-2 flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3 transition hover:border-indigo-300 hover:bg-indigo-50">
-                    <span class="grid h-9 w-9 place-items-center rounded-lg bg-red-100 text-red-600 font-bold text-xs">PDF</span>
+                <div class="mb-2 flex items-center gap-3 rounded-xl border border-line px-4 py-3 transition hover:border-accent/40 hover:bg-accent/10">
+                    <span class="grid h-9 w-9 place-items-center rounded-lg bg-hard/15 text-hard font-bold text-xs">PDF</span>
                     <a href="<?= e(url('download.php?type=pdf&inline=1&task=' . (int) $task['id'])) ?>" target="_blank" rel="noopener"
                        class="flex-1 min-w-0">
-                        <span class="block text-sm font-semibold text-slate-800">Tekst zadatka</span>
-                        <span class="block text-xs text-slate-500">Otvori PDF u novom prozoru</span>
+                        <span class="block text-sm font-semibold text-fg">Tekst zadatka</span>
+                        <span class="block text-xs text-muted">Otvori PDF u novom prozoru</span>
                     </a>
                     <a href="<?= e(url('download.php?type=pdf&task=' . (int) $task['id'])) ?>"
                        title="Preuzmi PDF"
-                       class="rounded-lg px-2 py-1 text-xs font-semibold text-indigo-600 transition hover:bg-indigo-100">↓ Preuzmi</a>
+                       class="rounded-lg px-2 py-1 text-xs font-semibold text-accent transition hover:bg-accent/15">↓ Preuzmi</a>
                 </div>
             <?php endif; ?>
 
             <!-- Test cases -->
             <?php if ($task['tests_path']): ?>
                 <a href="<?= e(url('download.php?type=tests&task=' . (int) $task['id'])) ?>"
-                   class="mb-2 flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3 transition hover:border-emerald-300 hover:bg-emerald-50">
-                    <span class="grid h-9 w-9 place-items-center rounded-lg bg-emerald-100 text-emerald-700 font-bold text-xs">ZIP</span>
+                   class="mb-2 flex items-center gap-3 rounded-xl border border-line px-4 py-3 transition hover:border-easy/40 hover:bg-easy/10">
+                    <span class="grid h-9 w-9 place-items-center rounded-lg bg-easy/15 text-easy font-bold text-xs">ZIP</span>
                     <span class="flex-1">
-                        <span class="block text-sm font-semibold text-slate-800">Test primjeri</span>
-                        <span class="block text-xs text-slate-500">Preuzmi ZIP arhivu</span>
+                        <span class="block text-sm font-semibold text-fg">Test primjeri</span>
+                        <span class="block text-xs text-muted">Preuzmi ZIP arhivu</span>
                     </span>
-                    <span class="text-slate-400">↓</span>
+                    <span class="text-muted">↓</span>
                 </a>
             <?php endif; ?>
 
             <!-- Solutions: click to preview the code in a modal, or download -->
             <?php if ($solutions): ?>
-                <p class="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide text-slate-400">Službena rješenja</p>
+                <p class="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide text-muted">Službena rješenja</p>
                 <?php foreach ($solutions as $sol): ?>
-                    <div class="mb-2 flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3 transition hover:border-indigo-300 hover:bg-indigo-50">
+                    <div class="group mb-2 flex items-center gap-3 rounded-xl border border-line px-4 py-3 transition hover:border-accent/40 hover:bg-accent/10">
                         <button type="button"
                                 class="sol-preview flex flex-1 min-w-0 items-center gap-3 text-left"
                                 data-id="<?= (int) $sol['id'] ?>"
                                 data-name="<?= e($sol['original_name']) ?>"
                                 data-lang="<?= e($sol['language'] ?: '') ?>">
-                            <span class="grid h-9 w-9 place-items-center rounded-lg bg-indigo-100 text-indigo-700 font-bold text-[10px]">
+                            <span class="grid h-9 w-9 place-items-center rounded-lg bg-accent/15 text-accent font-bold text-[10px]">
                                 <?= e($sol['language'] ? mb_strtoupper(mb_substr($sol['language'], 0, 3)) : 'SRC') ?>
                             </span>
                             <span class="flex-1 min-w-0">
-                                <span class="block truncate text-sm font-semibold text-slate-800 group-hover:text-indigo-600"><?= e($sol['original_name']) ?></span>
-                                <span class="block text-xs text-slate-500">
+                                <span class="block truncate text-sm font-semibold text-fg group-hover:text-accent"><?= e($sol['original_name']) ?></span>
+                                <span class="block text-xs text-muted">
                                     <?= e($sol['language'] ?: 'Izvorni kod') ?><?php if ($sol['file_size']): ?> · <?= e(human_size((int) $sol['file_size'])) ?><?php endif; ?>
-                                    · <span class="text-indigo-500">Pregledaj</span>
+                                    · <span class="text-accent">Pregledaj</span>
                                 </span>
                             </span>
                         </button>
                         <a href="<?= e(url('download.php?type=solution&id=' . (int) $sol['id'])) ?>"
                            title="Preuzmi rješenje"
-                           class="rounded-lg px-2 py-1 text-slate-400 transition hover:bg-indigo-100 hover:text-indigo-600">↓</a>
+                           class="rounded-lg px-2 py-1 text-muted transition hover:bg-accent/15 hover:text-accent">↓</a>
                     </div>
                 <?php endforeach; ?>
             <?php endif; ?>
 
             <?php if (!$task['pdf_path'] && !$task['tests_path'] && !$solutions): ?>
-                <p class="text-sm text-slate-500">Materijali za ovaj zadatak još nisu dodani.</p>
+                <p class="text-sm text-muted">Materijali za ovaj zadatak još nisu dodani.</p>
             <?php endif; ?>
         </div>
 
         <!-- Details -->
-        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 class="mb-4 text-xs font-semibold uppercase tracking-wide text-slate-400">Detalji</h2>
+        <div class="rounded-2xl border border-line bg-card p-5 shadow-sm">
+            <h2 class="mb-4 text-xs font-semibold uppercase tracking-wide text-muted">Detalji</h2>
             <dl class="space-y-2.5 text-sm">
                 <div class="flex justify-between gap-4">
-                    <dt class="text-slate-500">Godina</dt>
-                    <dd class="font-medium text-slate-800 tabular-nums"><?= e((string) $task['year']) ?></dd>
+                    <dt class="text-muted">Godina</dt>
+                    <dd class="font-medium text-fg tabular-nums"><?= e((string) $task['year']) ?></dd>
                 </div>
                 <div class="flex justify-between gap-4">
-                    <dt class="text-slate-500">Nivo</dt>
-                    <dd class="font-medium text-slate-800"><?= e($task['level_name']) ?></dd>
+                    <dt class="text-muted">Nivo</dt>
+                    <dd class="font-medium text-fg"><?= e($task['level_name']) ?></dd>
                 </div>
                 <?php if ($task['time_limit_ms']): ?>
                 <div class="flex justify-between gap-4">
-                    <dt class="text-slate-500">Vremensko ograničenje</dt>
-                    <dd class="font-medium text-slate-800 tabular-nums"><?= e((string) ($task['time_limit_ms'] / 1000)) ?> s</dd>
+                    <dt class="text-muted">Vremensko ograničenje</dt>
+                    <dd class="font-medium text-fg tabular-nums"><?= e((string) ($task['time_limit_ms'] / 1000)) ?> s</dd>
                 </div>
                 <?php endif; ?>
                 <?php if ($task['memory_limit_mb']): ?>
                 <div class="flex justify-between gap-4">
-                    <dt class="text-slate-500">Memorija</dt>
-                    <dd class="font-medium text-slate-800 tabular-nums"><?= e((string) $task['memory_limit_mb']) ?> MB</dd>
+                    <dt class="text-muted">Memorija</dt>
+                    <dd class="font-medium text-fg tabular-nums"><?= e((string) $task['memory_limit_mb']) ?> MB</dd>
                 </div>
                 <?php endif; ?>
             </dl>
 
             <?php if ($tags): ?>
-                <div class="mt-4 border-t border-slate-100 pt-4">
-                    <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Kategorije</p>
+                <div class="mt-4 border-t border-line pt-4">
+                    <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">Kategorije</p>
                     <div class="flex flex-wrap gap-1.5">
                         <?php foreach ($tags as $tg): ?>
                             <a href="<?= e(url('index.php?tag=' . urlencode($tg['slug']))) ?>"
-                               class="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 transition hover:bg-indigo-100 hover:text-indigo-700">
+                               class="inline-flex items-center rounded-md bg-elevated px-2 py-0.5 text-xs font-medium text-muted transition hover:bg-accent/15 hover:text-accent">
                                 <?= e($tg['name']) ?>
                             </a>
                         <?php endforeach; ?>
@@ -226,15 +233,15 @@ require __DIR__ . '/includes/header.php';
 
 <!-- ===== Solution preview modal ===== -->
 <div id="sol-modal" class="fixed inset-0 z-50 hidden">
-    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" data-close></div>
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" data-close></div>
     <div class="absolute inset-0 flex items-center justify-center p-4">
-        <div class="flex max-h-[85vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-900/10">
-            <header class="flex items-center gap-3 border-b border-slate-200 px-5 py-3">
-                <span id="sol-modal-lang" class="rounded-md bg-indigo-100 px-2 py-0.5 text-xs font-semibold text-indigo-700">CODE</span>
-                <span id="sol-modal-name" class="min-w-0 flex-1 truncate text-sm font-semibold text-slate-800"></span>
-                <button type="button" id="sol-copy" class="rounded-lg px-2.5 py-1 text-xs font-medium text-slate-600 transition hover:bg-slate-100">Kopiraj</button>
-                <a id="sol-download" href="#" class="rounded-lg px-2.5 py-1 text-xs font-medium text-indigo-600 transition hover:bg-indigo-50">↓ Preuzmi</a>
-                <button type="button" class="rounded-lg px-2 py-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700" data-close aria-label="Zatvori">✕</button>
+        <div class="flex max-h-[85vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-card shadow-2xl ring-1 ring-line">
+            <header class="flex items-center gap-3 border-b border-line px-5 py-3">
+                <span id="sol-modal-lang" class="rounded-md bg-accent/15 px-2 py-0.5 text-xs font-semibold text-accent">CODE</span>
+                <span id="sol-modal-name" class="min-w-0 flex-1 truncate text-sm font-semibold text-fg"></span>
+                <button type="button" id="sol-copy" class="rounded-lg px-2.5 py-1 text-xs font-medium text-muted transition hover:bg-elevated">Kopiraj</button>
+                <a id="sol-download" href="#" class="rounded-lg px-2.5 py-1 text-xs font-medium text-accent transition hover:bg-accent/15">↓ Preuzmi</a>
+                <button type="button" class="rounded-lg px-2 py-1 text-muted transition hover:bg-elevated hover:text-fg" data-close aria-label="Zatvori">✕</button>
             </header>
             <div class="overflow-auto bg-[#0d1117]">
                 <pre class="m-0 p-0"><code id="sol-code" class="hljs text-[13px] leading-6"></code></pre>
@@ -243,31 +250,35 @@ require __DIR__ . '/includes/header.php';
     </div>
 </div>
 
-<!-- Markdown + syntax highlighting (CDN) -->
+<!-- Markdown + syntax highlighting + math (CDN) -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
 <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.9/dist/purify.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 
 <style>
-    /* Rendered Markdown statement */
-    .prose-task h1 { font-size: 1.4rem; font-weight: 800; margin: 1.2em 0 .5em; color: #0f172a; }
-    .prose-task h2 { font-size: 1.15rem; font-weight: 700; margin: 1.2em 0 .4em; color: #1e293b; }
-    .prose-task h3 { font-size: 1rem; font-weight: 700; margin: 1em 0 .3em; color: #334155; }
+    /* Rendered Markdown statement (theme-aware) */
+    .prose-task h1 { font-size: 1.4rem; font-weight: 800; margin: 1.2em 0 .5em; color: var(--fg); }
+    .prose-task h2 { font-size: 1.15rem; font-weight: 700; margin: 1.2em 0 .4em; color: var(--fg); }
+    .prose-task h3 { font-size: 1rem; font-weight: 700; margin: 1em 0 .3em; color: var(--fg); }
     .prose-task p  { margin: .7em 0; }
     .prose-task ul, .prose-task ol { margin: .7em 0; padding-left: 1.4em; }
     .prose-task ul { list-style: disc; } .prose-task ol { list-style: decimal; }
     .prose-task li { margin: .25em 0; }
-    .prose-task code { background: #f1f5f9; padding: .1em .35em; border-radius: 4px; font-size: .9em; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .prose-task code { background: var(--elevated); padding: .1em .35em; border-radius: 4px; font-size: .9em; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
     .prose-task pre { background: #0d1117; color: #e6edf3; padding: 1em; border-radius: 10px; overflow-x: auto; margin: .9em 0; }
     .prose-task pre code { background: none; padding: 0; color: inherit; }
-    .prose-task blockquote { border-left: 3px solid #c7d2fe; padding-left: 1em; color: #475569; margin: .8em 0; font-style: italic; }
+    .prose-task blockquote { border-left: 3px solid var(--line); padding-left: 1em; color: var(--muted); margin: .8em 0; font-style: italic; }
     .prose-task table { border-collapse: collapse; margin: .9em 0; width: 100%; }
-    .prose-task th, .prose-task td { border: 1px solid #e2e8f0; padding: .4em .6em; text-align: left; }
-    .prose-task th { background: #f8fafc; font-weight: 600; }
+    .prose-task th, .prose-task td { border: 1px solid var(--line); padding: .4em .6em; text-align: left; }
+    .prose-task th { background: var(--elevated); font-weight: 600; }
     .prose-task img { max-width: 100%; border-radius: 8px; }
-    .prose-task a { color: #4f46e5; text-decoration: underline; }
+    .prose-task a { color: #2f81f7; text-decoration: underline; }
     #sol-code { display: block; padding: 1.1rem 1.25rem; white-space: pre; }
+    #mark-done.is-done { background: rgba(46,160,67,.15); border-color: rgba(46,160,67,.55); color: #2ea043; }
 </style>
 
 <script>
@@ -282,6 +293,44 @@ require __DIR__ . '/includes/header.php';
         if (window.hljs) {
             body.querySelectorAll('pre code').forEach(function (el) { hljs.highlightElement(el); });
         }
+        // Render LaTeX math ($…$, $$…$$) commonly used in problem statements.
+        if (window.renderMathInElement) {
+            try {
+                renderMathInElement(body, {
+                    delimiters: [
+                        { left: '$$', right: '$$', display: true },
+                        { left: '$',  right: '$',  display: false },
+                        { left: '\\(', right: '\\)', display: false },
+                        { left: '\\[', right: '\\]', display: true }
+                    ],
+                    throwOnError: false
+                });
+            } catch (e) {}
+        }
+    }
+
+    // --- Mark as completed (shared with the catalog via localStorage) ---
+    var DONE_KEY = 'bhoi_completed_v1';
+    var markBtn = document.getElementById('mark-done');
+    if (markBtn) {
+        var taskId = markBtn.dataset.id;
+        var label = document.getElementById('mark-done-label');
+        var getDone = function () {
+            try { return new Set(JSON.parse(localStorage.getItem(DONE_KEY) || '[]').map(String)); }
+            catch (e) { return new Set(); }
+        };
+        var render = function () {
+            var d = getDone().has(taskId);
+            markBtn.classList.toggle('is-done', d);
+            if (label) label.textContent = d ? 'Riješeno ✓' : 'Označi kao riješeno';
+        };
+        markBtn.addEventListener('click', function () {
+            var s = getDone();
+            if (s.has(taskId)) { s.delete(taskId); } else { s.add(taskId); }
+            try { localStorage.setItem(DONE_KEY, JSON.stringify(Array.from(s))); } catch (e) {}
+            render();
+        });
+        render();
     }
 
     // --- Map a filename extension to a highlight.js language ---

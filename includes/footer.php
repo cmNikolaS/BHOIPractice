@@ -5,10 +5,10 @@
 ?>
 </main>
 
-<footer class="mt-16 border-t border-slate-200 bg-white">
-    <div class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-6 text-sm text-slate-500 sm:flex-row sm:px-6">
+<footer class="mt-16 border-t border-line bg-card">
+    <div class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-6 text-sm text-muted sm:flex-row sm:px-6">
         <p>&copy; <?= date('Y') ?> <?= e(APP_NAME) ?> — Arhiva takmičarskih zadataka iz informatike.</p>
-        <p>Kantonalno · Regionalno · Federalno · Republičko · Državno (BHOI)</p>
+        <p>Državno (BHOI) · Juniorsko (jBHOI) · BHGOI · Kvalifikacije</p>
     </div>
 </footer>
 

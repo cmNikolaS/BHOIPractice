@@ -104,23 +104,27 @@ function take_flashes(): array
 function level_badge(string $slug): string
 {
     return match ($slug) {
-        'kantonalno'   => 'bg-sky-50 text-sky-700 ring-sky-600/20',
-        'regionalno'   => 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
-        'federalno'    => 'bg-amber-50 text-amber-700 ring-amber-600/20',
-        'republicko'   => 'bg-violet-50 text-violet-700 ring-violet-600/20',
-        'drzavno-bhoi' => 'bg-rose-50 text-rose-700 ring-rose-600/20',
-        default        => 'bg-slate-100 text-slate-700 ring-slate-600/20',
+        'drzavno-bhoi' => 'bg-rose-500/10 text-rose-600 dark:text-rose-400 ring-rose-500/25',
+        'jbhoi'        => 'bg-violet-500/10 text-violet-600 dark:text-violet-400 ring-violet-500/25',
+        'bhgoi'        => 'bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-400 ring-fuchsia-500/25',
+        'kvalifikacije'=> 'bg-sky-500/10 text-sky-600 dark:text-sky-400 ring-sky-500/25',
+        // legacy cantonal levels (still supported)
+        'kantonalno'   => 'bg-sky-500/10 text-sky-600 dark:text-sky-400 ring-sky-500/25',
+        'regionalno'   => 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-emerald-500/25',
+        'federalno'    => 'bg-amber-500/10 text-amber-600 dark:text-amber-400 ring-amber-500/25',
+        'republicko'   => 'bg-violet-500/10 text-violet-600 dark:text-violet-400 ring-violet-500/25',
+        default        => 'bg-elevated text-muted ring-line',
     };
 }
 
-/** Tailwind classes for a difficulty badge. */
+/** Tailwind classes for a difficulty badge (LeetCode-style colors). */
 function difficulty_badge(string $difficulty): string
 {
     return match ($difficulty) {
-        'Lako'    => 'bg-green-50 text-green-700 ring-green-600/20',
-        'Srednje' => 'bg-yellow-50 text-yellow-700 ring-yellow-600/20',
-        'Teško'   => 'bg-red-50 text-red-700 ring-red-600/20',
-        default   => 'bg-slate-100 text-slate-700 ring-slate-600/20',
+        'Lako'    => 'bg-easy/15 text-easy ring-easy/30',
+        'Srednje' => 'bg-medium/15 text-medium ring-medium/30',
+        'Teško'   => 'bg-hard/15 text-hard ring-hard/30',
+        default   => 'bg-elevated text-muted ring-line',
     };
 }
 
