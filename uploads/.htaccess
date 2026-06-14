@@ -1,0 +1,14 @@
+# Hardening for the uploads directory (Apache).
+# Files here are user-uploaded; they must never be executed as scripts.
+# Public access still works because downloads are streamed by download.php,
+# but defense-in-depth: block script execution and directory listing.
+
+php_flag engine off
+
+<IfModule mod_authz_core.c>
+    <FilesMatch "\.(php|phtml|php3|php4|php5|php7|phps|pht|cgi|pl|asp|aspx|jsp|sh|exe|bat)$">
+        Require all denied
+    </FilesMatch>
+</IfModule>
+
+Options -ExecCGI -Indexes

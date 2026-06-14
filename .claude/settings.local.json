@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php -v)",
+      "Bash(mysql --version)",
+      "Read(//c/xampp/**)",
+      "Bash(/c/xampp/php/php.exe -v)",
+      "Bash(/c/xampp/php/php.exe -r \"echo password_hash\\('admin123', PASSWORD_BCRYPT\\);\")",
+      "Bash(/c/xampp/mysql/bin/mysql.exe -u root -e \"SELECT VERSION\\(\\);\")",
+      "PowerShell($c = Test-NetConnection -ComputerName 127.0.0.1 -Port 3306 -WarningAction SilentlyContinue; \"Port 3306 open: $\\($c.TcpTestSucceeded\\)\")",
+      "PowerShell(Stop-Process -Name mysqld -Force -ErrorAction SilentlyContinue)",
+      "PowerShell(\"killed stragglers\")",
+      "Bash(./mysql/bin/mysqld.exe --defaults-file=mysql/bin/my.ini --standalone)"
+    ]
+  }
+}

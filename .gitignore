@@ -1,0 +1,18 @@
+# Uploaded files (keep the folders, ignore their contents)
+/uploads/pdf/*
+/uploads/tests/*
+/uploads/solutions/*
+!/uploads/**/.gitkeep
+!/uploads/.htaccess
+
+# Local environment / secrets
+.env
+config.local.php
+
+# One-off import staging (git tree + logs)
+/_import/
+
+# Editor / OS noise
+.DS_Store
+Thumbs.db
+*.log
