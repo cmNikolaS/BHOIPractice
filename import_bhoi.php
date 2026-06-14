@@ -157,8 +157,16 @@ function category_tag(string $cat): ?array {
 
 $pdo = db();
 
+// The git tree is git-ignored, so fetch it from the GitHub API on demand.
+// This keeps the importer self-contained on a fresh clone.
 if (!is_file(TREE_JSON)) {
-    exit('Missing ' . TREE_JSON . " — fetch the repo git tree first.\n");
+    out('Fetching repo file tree from the GitHub API ...');
+    @mkdir(dirname(TREE_JSON), 0775, true);
+    $api = fetch('https://api.github.com/repos/BHOI/BHOI-takmicenja-iz-informatike/git/trees/master?recursive=1');
+    if ($api === null) {
+        exit("Could not fetch the repo tree (network/GitHub API issue). Try again.\n");
+    }
+    file_put_contents(TREE_JSON, $api);
 }
 $tree = json_decode((string) file_get_contents(TREE_JSON), true);
 if (!isset($tree['tree'])) {

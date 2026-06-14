@@ -1,0 +1,23 @@
+# Validates that every PHP file is syntactically correct on each push.
+# Runs inside the official PHP image, so it needs no marketplace actions
+# and cannot fail to provision a runtime. This is a CHECK, not a deploy —
+# the app itself (PHP + MySQL) cannot run on GitHub; host it on a PHP
+# server or run it locally with preview.bat (see README).
+name: PHP Lint
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  php-lint:
+    runs-on: ubuntu-latest
+    container: php:8.2-cli
+    steps:
+      - uses: actions/checkout@v4
+      - name: Syntax-check all PHP files
+        run: |
+          set -e
+          find . -name '*.php' -not -path './vendor/*' -print0 \
+            | xargs -0 -n1 -P4 php -l

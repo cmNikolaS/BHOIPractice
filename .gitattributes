@@ -1,2 +1,20 @@
-# Auto detect text files and perform LF normalization
+# Normalize line endings: text auto-detected, but pin endings where it matters.
 * text=auto
+
+# Windows scripts must keep CRLF to run correctly
+*.bat  text eol=crlf
+*.ps1  text eol=crlf
+
+# Unix shell scripts + CI YAML must keep LF (they run on Linux runners)
+*.sh   text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+
+# Treat these as binary (never line-ending-normalized or diffed)
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.pdf  binary
+*.zip  binary
