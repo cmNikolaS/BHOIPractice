@@ -76,6 +76,19 @@ CREATE TABLE solutions (
 );
 CREATE INDEX idx_sol_task ON solutions (task_id);
 
+CREATE TABLE submissions (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    task_id    INTEGER,
+    language   TEXT NOT NULL,
+    source     TEXT NOT NULL,
+    status     TEXT,
+    time_ms    INTEGER,
+    memory_kb  INTEGER,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (task_id) REFERENCES tasks (id) ON UPDATE CASCADE ON DELETE SET NULL
+);
+CREATE INDEX idx_sub_task ON submissions (task_id);
+
 CREATE TABLE admins (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     username      TEXT NOT NULL UNIQUE,

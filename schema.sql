@@ -120,6 +120,26 @@ CREATE TABLE `solutions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------
+--  submissions — code runs via the online judge (Judge0). MVP: ad-hoc
+--  "Run code" against custom stdin; later, judging vs official tests.
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `submissions` (
+    `id`         INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `task_id`    INT UNSIGNED NULL,
+    `language`   VARCHAR(20) NOT NULL,
+    `source`     MEDIUMTEXT NOT NULL,
+    `status`     VARCHAR(40) NULL,
+    `time_ms`    INT UNSIGNED NULL,
+    `memory_kb`  INT UNSIGNED NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_sub_task` (`task_id`),
+    CONSTRAINT `fk_sub_task`
+        FOREIGN KEY (`task_id`) REFERENCES `tasks` (`id`)
+        ON UPDATE CASCADE ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------------------------
 --  admins — back-office accounts. Passwords stored as bcrypt hashes.
 -- ---------------------------------------------------------------------
 CREATE TABLE `admins` (

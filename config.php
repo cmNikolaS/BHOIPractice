@@ -50,6 +50,18 @@ define('UPLOAD_DIR', getenv('UPLOAD_DIR') ?: (__DIR__ . DIRECTORY_SEPARATOR . 'u
 define('MAX_UPLOAD_BYTES', 15 * 1024 * 1024);
 
 // ---------------------------------------------------------------------
+//  Online judge (Judge0) — optional. Set JUDGE0_URL to enable the
+//  "Run code" feature (see includes/judge.php + JUDGE.md). Left empty,
+//  the feature is dormant and nothing about it is shown to users.
+//  Self-hosted:  JUDGE0_URL=https://your-judge0   (no key needed)
+//  RapidAPI:     JUDGE0_URL=https://judge0-ce.p.rapidapi.com
+//                JUDGE0_KEY=<rapidapi key>  JUDGE0_HOST=judge0-ce.p.rapidapi.com
+// ---------------------------------------------------------------------
+define('JUDGE0_URL',  rtrim((string) (getenv('JUDGE0_URL')  ?: ''), '/'));
+define('JUDGE0_KEY',  getenv('JUDGE0_KEY')  ?: '');
+define('JUDGE0_HOST', getenv('JUDGE0_HOST') ?: ''); // RapidAPI host header, if used
+
+// ---------------------------------------------------------------------
 //  PDO connection (lazy singleton)
 // ---------------------------------------------------------------------
 /**

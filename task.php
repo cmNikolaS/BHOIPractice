@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/includes/bootstrap.php';
 require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/judge.php';
 
 $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 if (!$id) {
@@ -230,6 +231,87 @@ require __DIR__ . '/includes/header.php';
         </div>
     </aside>
 </div>
+
+<?php if (judge_enabled()): ?>
+<!-- ===== Run code (Judge0) — shown only when the judge is configured ===== -->
+<section class="mt-6 overflow-hidden rounded-2xl border border-line bg-card shadow-sm">
+    <div class="flex items-center justify-between border-b border-line px-5 py-3">
+        <h2 class="text-sm font-semibold uppercase tracking-wide text-muted">Pokreni kod</h2>
+        <select id="run-lang" class="rounded-lg border border-line bg-elevated px-3 py-1.5 text-sm text-fg outline-none">
+            <?php foreach (judge_languages() as $key => $l): ?>
+                <option value="<?= e($key) ?>"<?= $key === 'cpp' ? ' selected' : '' ?>><?= e($l['label']) ?></option>
+            <?php endforeach; ?>
+        </select>
+    </div>
+    <div class="grid gap-4 p-5 lg:grid-cols-2">
+        <div>
+            <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted" for="run-source">Izvorni kod</label>
+            <textarea id="run-source" rows="14" spellcheck="false"
+                class="w-full rounded-xl border border-line bg-[#0d1117] px-3 py-2.5 font-mono text-[13px] leading-6 text-fg outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
+                placeholder="// zalijepi svoj kod ovdje"></textarea>
+        </div>
+        <div class="flex flex-col gap-4">
+            <div>
+                <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted" for="run-stdin">Ulaz (stdin)</label>
+                <textarea id="run-stdin" rows="5" spellcheck="false"
+                    class="w-full rounded-xl border border-line bg-elevated px-3 py-2.5 font-mono text-[13px] leading-6 text-fg outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
+                    placeholder="ulazni podaci za test"></textarea>
+            </div>
+            <div>
+                <div class="mb-1 flex items-center justify-between">
+                    <label class="text-xs font-semibold uppercase tracking-wide text-muted">Izlaz</label>
+                    <span id="run-meta" class="text-xs text-muted"></span>
+                </div>
+                <pre id="run-output" class="m-0 max-h-48 overflow-auto rounded-xl border border-line bg-[#0d1117] px-3 py-2.5 font-mono text-[13px] leading-6 text-fg whitespace-pre-wrap"></pre>
+            </div>
+        </div>
+    </div>
+    <div class="flex items-center gap-3 border-t border-line px-5 py-3">
+        <button id="run-btn" type="button"
+            class="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-110 disabled:opacity-60">
+            ▶ Pokreni
+        </button>
+        <span id="run-status" class="text-sm font-medium text-muted"></span>
+        <span class="ml-auto text-xs text-muted">Kompajlira i pokreće preko Judge0 · provjera protiv zvaničnih test primjera uskoro</span>
+    </div>
+</section>
+
+<script>
+(function () {
+    var btn = document.getElementById('run-btn'); if (!btn) return;
+    var CSRF = <?= json_encode(csrf_token()) ?>;
+    var TASK = <?= (int) $task['id'] ?>;
+    var out = document.getElementById('run-output');
+    var statusEl = document.getElementById('run-status');
+    var metaEl = document.getElementById('run-meta');
+    btn.addEventListener('click', function () {
+        var src = document.getElementById('run-source').value;
+        if (!src.trim()) { statusEl.textContent = 'Unesi kod.'; return; }
+        btn.disabled = true; statusEl.textContent = 'Pokrećem…'; out.textContent = ''; metaEl.textContent = '';
+        var body = new URLSearchParams();
+        body.set('csrf_token', CSRF);
+        body.set('task_id', TASK);
+        body.set('language', document.getElementById('run-lang').value);
+        body.set('source', src);
+        body.set('stdin', document.getElementById('run-stdin').value);
+        fetch('<?= e(url('submit.php')) ?>', { method: 'POST', credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() })
+            .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+            .then(function (res) {
+                var j = res.j;
+                if (!res.ok || j.error) { statusEl.textContent = j.error || 'Greška.'; return; }
+                statusEl.textContent = j.status || 'Gotovo';
+                var t = j.time != null ? (j.time + ' s') : '';
+                var m = j.memory != null ? (Math.round(j.memory / 1024) + ' MB') : '';
+                metaEl.textContent = [t, m].filter(Boolean).join(' · ');
+                out.textContent = j.compile ? j.compile : (j.stdout || '') + (j.stderr ? '\n' + j.stderr : '');
+            })
+            .catch(function () { statusEl.textContent = 'Mreža/server greška.'; })
+            .finally(function () { btn.disabled = false; });
+    });
+})();
+</script>
+<?php endif; ?>
 
 <!-- ===== Solution preview modal ===== -->
 <div id="sol-modal" class="fixed inset-0 z-50 hidden">
