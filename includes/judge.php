@@ -20,17 +20,15 @@ function judge_enabled(): bool
 }
 
 /**
- * Languages we expose, mapped to Judge0 CE language ids. Kept small and
- * aligned with what the archive's solutions use.
+ * Languages we expose, mapped to Judge0 language ids. The default id targets
+ * Judge0 Extra CE (C++ = Clang 10.0.1, id 2); override with JUDGE0_CPP_ID if
+ * you point JUDGE0_URL at regular CE (GCC C++ is id 54 there).
  */
 function judge_languages(): array
 {
+    $cppId = (int) (getenv('JUDGE0_CPP_ID') ?: 2);
     return [
-        'cpp'    => ['id' => 54, 'label' => 'C++ (GCC)'],
-        'c'      => ['id' => 50, 'label' => 'C (GCC)'],
-        'python' => ['id' => 71, 'label' => 'Python 3'],
-        'java'   => ['id' => 62, 'label' => 'Java'],
-        'pascal' => ['id' => 67, 'label' => 'Pascal (FPC)'],
+        'cpp' => ['id' => $cppId, 'label' => 'C++'],
     ];
 }
 
@@ -38,7 +36,7 @@ function judge_languages(): array
  * Run source against one stdin via Judge0 (synchronous: wait=true).
  * Returns a normalized array, or ['error' => '...'] on transport failure.
  */
-function judge_run(string $source, int $languageId, string $stdin = '', ?string $expectedOutput = null): array
+function judge_run(string $source, int $languageId, string $stdin = '', ?string $expectedOutput = null, float $cpuTimeLimit = 1.0): array
 {
     if (!judge_enabled()) {
         return ['error' => 'Judge nije konfigurisan (JUDGE0_URL nije postavljen).'];
@@ -49,6 +47,7 @@ function judge_run(string $source, int $languageId, string $stdin = '', ?string 
         'source_code'  => base64_encode($source),
         'stdin'        => base64_encode($stdin),
         'redirect_stderr_to_stdout' => false,
+        'cpu_time_limit' => $cpuTimeLimit,   // seconds; memory left at judge default
     ];
     if ($expectedOutput !== null) {
         $payload['expected_output'] = base64_encode($expectedOutput);

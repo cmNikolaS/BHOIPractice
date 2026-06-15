@@ -29,7 +29,8 @@ fi
 # so admin edits survive redeploys). Curated ratings/tags are applied once via
 #   flyctl ssh console -C "php /var/www/html/classify_tasks.php"
 sqlite3 "$DB_PATH" "ALTER TABLE tasks ADD COLUMN difficulty_rating INTEGER NOT NULL DEFAULT 5" 2>/dev/null || true
-sqlite3 "$DB_PATH" "CREATE TABLE IF NOT EXISTS submissions (id INTEGER PRIMARY KEY AUTOINCREMENT, task_id INTEGER, language TEXT NOT NULL, source TEXT NOT NULL, status TEXT, time_ms INTEGER, memory_kb INTEGER, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (task_id) REFERENCES tasks (id) ON UPDATE CASCADE ON DELETE SET NULL)" 2>/dev/null || true
+sqlite3 "$DB_PATH" "CREATE TABLE IF NOT EXISTS submissions (id INTEGER PRIMARY KEY AUTOINCREMENT, task_id INTEGER, language TEXT NOT NULL, source TEXT NOT NULL, status TEXT, time_ms INTEGER, memory_kb INTEGER, ip TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (task_id) REFERENCES tasks (id) ON UPDATE CASCADE ON DELETE SET NULL)" 2>/dev/null || true
+sqlite3 "$DB_PATH" "ALTER TABLE submissions ADD COLUMN ip TEXT" 2>/dev/null || true
 
 # The web server owns the data it reads/writes (uploads, sqlite WAL).
 chown -R www-data:www-data "$DATA_DIR" || true

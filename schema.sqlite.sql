@@ -84,10 +84,12 @@ CREATE TABLE submissions (
     status     TEXT,
     time_ms    INTEGER,
     memory_kb  INTEGER,
+    ip         TEXT,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (task_id) REFERENCES tasks (id) ON UPDATE CASCADE ON DELETE SET NULL
 );
 CREATE INDEX idx_sub_task ON submissions (task_id);
+CREATE INDEX idx_sub_ip ON submissions (ip, created_at);
 
 CREATE TABLE admins (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,

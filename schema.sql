@@ -131,9 +131,11 @@ CREATE TABLE IF NOT EXISTS `submissions` (
     `status`     VARCHAR(40) NULL,
     `time_ms`    INT UNSIGNED NULL,
     `memory_kb`  INT UNSIGNED NULL,
+    `ip`         VARCHAR(45) NULL,
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     KEY `idx_sub_task` (`task_id`),
+    KEY `idx_sub_ip` (`ip`, `created_at`),
     CONSTRAINT `fk_sub_task`
         FOREIGN KEY (`task_id`) REFERENCES `tasks` (`id`)
         ON UPDATE CASCADE ON DELETE SET NULL
