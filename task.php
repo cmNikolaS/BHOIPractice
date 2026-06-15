@@ -88,8 +88,9 @@ require __DIR__ . '/includes/header.php';
                 <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset <?= level_badge($task['level_slug']) ?>">
                     <?= e($task['level_name']) ?>
                 </span>
-                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset <?= difficulty_badge($task['difficulty']) ?>">
+                <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset <?= difficulty_badge($task['difficulty']) ?>">
                     <?= e($task['difficulty']) ?>
+                    <span class="opacity-70">·&nbsp;<?= (int) $task['difficulty_rating'] ?></span>
                 </span>
                 <span class="inline-flex items-center rounded-full bg-elevated px-2.5 py-0.5 text-xs font-medium text-muted tabular-nums">
                     <?= e((string) $task['year']) ?>

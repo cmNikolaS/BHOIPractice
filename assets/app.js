@@ -25,7 +25,15 @@
     var count  = document.getElementById('result-count');
     var empty  = document.getElementById('empty-state');
     var solvedCountEl = document.getElementById('solved-count');
-    var progressBar   = document.getElementById('progress-bar');
+
+    /* ---- difficulty progress ring (LeetCode-style) ---- */
+    var RING_C = 2 * Math.PI * 52;          // circle r=52 in the SVG
+    var ringEl = { 'Lako': document.getElementById('ring-easy'),
+                   'Srednje': document.getElementById('ring-medium'),
+                   'Teško': document.getElementById('ring-hard') };
+    var cntEl  = { 'Lako': document.getElementById('cnt-easy'),
+                   'Srednje': document.getElementById('cnt-medium'),
+                   'Teško': document.getElementById('cnt-hard') };
 
     if (!search) return;
 
@@ -56,9 +64,31 @@
     }
 
     function refreshProgress() {
-        var solved = rows.reduce(function (n, r) { return n + (done.has(r.dataset.id) ? 1 : 0); }, 0);
+        var order = ['Lako', 'Srednje', 'Teško'];
+        var tot = { 'Lako': 0, 'Srednje': 0, 'Teško': 0 };
+        var sol = { 'Lako': 0, 'Srednje': 0, 'Teško': 0 };
+        rows.forEach(function (r) {
+            var b = r.dataset.difficulty;
+            if (tot[b] === undefined) return;
+            tot[b]++;
+            if (done.has(r.dataset.id)) sol[b]++;
+        });
+        var solved = sol['Lako'] + sol['Srednje'] + sol['Teško'];
         if (solvedCountEl) solvedCountEl.textContent = String(solved);
-        if (progressBar) progressBar.style.width = (total ? Math.round(solved / total * 100) : 0) + '%';
+
+        var T = total || 1, gap = 3, start = 0;
+        order.forEach(function (b) {
+            var len = (sol[b] / T) * RING_C;          // arc length ∝ solved share of all tasks
+            var el = ringEl[b];
+            if (el) {
+                // small gap between segments, but only when the arc is big enough to spare it
+                var draw = len >= 7.5 ? len - gap : len;
+                el.setAttribute('stroke-dasharray', draw.toFixed(2) + ' ' + (RING_C - draw).toFixed(2));
+                el.setAttribute('stroke-dashoffset', (-start).toFixed(2));
+            }
+            start += len;
+            if (cntEl[b]) cntEl[b].textContent = sol[b] + '/' + tot[b];
+        });
     }
 
     /* ---- filtering ---- */

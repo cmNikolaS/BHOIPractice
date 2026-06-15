@@ -80,14 +80,41 @@ require __DIR__ . '/includes/header.php';
         </p>
     </div>
 
-    <!-- Progress (filled client-side) -->
-    <div class="w-full sm:w-72">
-        <div class="mb-1.5 flex items-baseline justify-between text-sm">
-            <span class="font-medium text-muted">Napredak</span>
-            <span class="font-semibold text-fg"><span id="solved-count">0</span> / <?= $total ?> riješeno</span>
-        </div>
-        <div class="h-2.5 w-full overflow-hidden rounded-full bg-elevated">
-            <div id="progress-bar" class="h-full rounded-full bg-done transition-all duration-500" style="width:0%"></div>
+    <!-- Progress ring (filled client-side, segmented by difficulty) -->
+    <div class="w-full rounded-2xl border border-line bg-card p-4 shadow-sm sm:w-auto">
+        <div class="flex items-center gap-5">
+            <div class="relative h-28 w-28 shrink-0">
+                <svg viewBox="0 0 120 120" class="h-full w-full -rotate-90">
+                    <circle cx="60" cy="60" r="52" fill="none" stroke="var(--elevated)" stroke-width="11"/>
+                    <circle id="ring-easy"   cx="60" cy="60" r="52" fill="none" stroke="#1cb8a8"   stroke-width="11" stroke-dasharray="0 999" style="transition:stroke-dasharray .5s,stroke-dashoffset .5s"/>
+                    <circle id="ring-medium" cx="60" cy="60" r="52" fill="none" stroke="#ffb700" stroke-width="11" stroke-dasharray="0 999" style="transition:stroke-dasharray .5s,stroke-dashoffset .5s"/>
+                    <circle id="ring-hard"   cx="60" cy="60" r="52" fill="none" stroke="#f63737"   stroke-width="11" stroke-dasharray="0 999" style="transition:stroke-dasharray .5s,stroke-dashoffset .5s"/>
+                </svg>
+                <div class="absolute inset-0 grid place-items-center">
+                    <div class="text-center leading-none">
+                        <div id="solved-count" class="text-2xl font-extrabold text-fg">0</div>
+                        <div class="mt-1 text-[11px] font-medium text-muted">/ <?= $total ?></div>
+                    </div>
+                </div>
+            </div>
+            <div class="min-w-[7.5rem] space-y-2">
+                <p class="text-xs font-semibold uppercase tracking-wide text-muted">Napredak</p>
+                <div class="flex items-center gap-2 text-sm">
+                    <span class="h-2.5 w-2.5 rounded-full" style="background:#1cb8a8"></span>
+                    <span class="text-muted">Lako</span>
+                    <span id="cnt-easy" class="ml-auto font-semibold tabular-nums text-fg">0/0</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm">
+                    <span class="h-2.5 w-2.5 rounded-full" style="background:#ffb700"></span>
+                    <span class="text-muted">Srednje</span>
+                    <span id="cnt-medium" class="ml-auto font-semibold tabular-nums text-fg">0/0</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm">
+                    <span class="h-2.5 w-2.5 rounded-full" style="background:#f63737"></span>
+                    <span class="text-muted">Teško</span>
+                    <span id="cnt-hard" class="ml-auto font-semibold tabular-nums text-fg">0/0</span>
+                </div>
+            </div>
         </div>
     </div>
 </section>
