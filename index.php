@@ -264,13 +264,13 @@ require __DIR__ . '/includes/header.php';
         <table class="min-w-full divide-y divide-line text-sm">
             <thead class="bg-elevated text-left text-xs font-semibold uppercase tracking-wide text-muted">
                 <tr>
-                    <th class="px-5 py-3 w-12">Status</th>
-                    <th class="px-5 py-3">Zadatak</th>
-                    <th class="px-5 py-3">Težina</th>
-                    <th class="px-5 py-3">Nivo</th>
-                    <th class="px-5 py-3">Godina</th>
-                    <th class="px-5 py-3">Kategorije</th>
-                    <th class="px-5 py-3 text-right">Materijali</th>
+                    <th class="px-3 py-3 sm:px-5 w-12">Status</th>
+                    <th class="px-3 py-3 sm:px-5">Zadatak</th>
+                    <th class="px-3 py-3 sm:px-5">Težina</th>
+                    <th class="hidden px-3 py-3 sm:px-5 md:table-cell">Nivo</th>
+                    <th class="hidden px-3 py-3 sm:px-5 sm:table-cell">Godina</th>
+                    <th class="hidden px-3 py-3 sm:px-5 lg:table-cell">Kategorije</th>
+                    <th class="px-3 py-3 sm:px-5 text-right">Materijali</th>
                 </tr>
             </thead>
             <tbody id="task-rows" class="divide-y divide-line">
@@ -292,13 +292,13 @@ require __DIR__ . '/includes/header.php';
                     data-search="<?= e($searchBlob) ?>"
                     data-url="<?= e($taskUrl) ?>">
 
-                    <td class="px-5 py-4">
+                    <td class="px-3 py-4 sm:px-5">
                         <button type="button" class="status-toggle" data-id="<?= (int) $t['id'] ?>" title="Označi kao riješeno" aria-label="Označi kao riješeno">
                             <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M4 10l4 4 8-9"/></svg>
                         </button>
                     </td>
 
-                    <td class="px-5 py-4">
+                    <td class="px-3 py-4 sm:px-5">
                         <a href="<?= e($taskUrl) ?>" class="row-title font-semibold text-fg transition group-hover:text-accent">
                             <?php if ($t['problem_index'] !== null && $t['problem_index'] !== ''): ?>
                                 <span class="mr-1 text-muted"><?= e($t['problem_index']) ?>.</span>
@@ -307,22 +307,22 @@ require __DIR__ . '/includes/header.php';
                         </a>
                     </td>
 
-                    <td class="px-5 py-4">
+                    <td class="px-3 py-4 sm:px-5">
                         <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset <?= difficulty_badge($t['difficulty']) ?>">
                             <?= e($t['difficulty']) ?>
                             <span class="opacity-70">·&nbsp;<?= (int) $t['difficulty_rating'] ?></span>
                         </span>
                     </td>
 
-                    <td class="px-5 py-4">
+                    <td class="hidden px-3 py-4 sm:px-5 md:table-cell">
                         <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset <?= level_badge($t['level_slug']) ?>">
                             <?= e($t['level_name']) ?>
                         </span>
                     </td>
 
-                    <td class="px-5 py-4 tabular-nums text-muted"><?= e((string) $t['year']) ?></td>
+                    <td class="hidden px-3 py-4 sm:px-5 tabular-nums text-muted sm:table-cell"><?= e((string) $t['year']) ?></td>
 
-                    <td class="px-5 py-4">
+                    <td class="hidden px-3 py-4 sm:px-5 lg:table-cell">
                         <div class="flex flex-wrap gap-1.5">
                             <?php foreach ($tagNames as $name): ?>
                                 <span class="inline-flex items-center rounded-md bg-elevated px-2 py-0.5 text-xs font-medium text-muted"><?= e($name) ?></span>
@@ -331,7 +331,7 @@ require __DIR__ . '/includes/header.php';
                         </div>
                     </td>
 
-                    <td class="px-5 py-4">
+                    <td class="px-3 py-4 sm:px-5">
                         <div class="flex items-center justify-end gap-2">
                             <?php if ($t['pdf_path']): ?>
                                 <span title="Tekst zadatka (PDF)" class="rounded-md bg-hard/15 px-1.5 py-0.5 text-xs font-medium text-hard">PDF</span>

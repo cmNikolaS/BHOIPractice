@@ -8,6 +8,34 @@
 ?>
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2032'%3E%3Crect%20width='32'%20height='32'%20rx='7'%20fill='%23ffa116'/%3E%3Ctext%20x='16'%20y='23'%20font-family='Arial'%20font-size='19'%20font-weight='bold'%20fill='%231a1a1a'%20text-anchor='middle'%3EB%3C/text%3E%3C/svg%3E">
 
+<?php
+// --- SEO / social meta (shared by every page) -----------------------------
+$metaTitle = $page_title ?? APP_NAME;
+$fullTitle = $metaTitle === APP_NAME ? APP_NAME : ($metaTitle . ' — ' . APP_NAME);
+$metaDesc  = $page_desc ?? 'Arhiva i platforma za vježbu zadataka sa takmičenja iz informatike u BiH (jBHOI, BHGOI, BHOI). 301 zadatak (2003–2026), tekstovi, službena rješenja i online provjera koda.';
+$ogImage   = APP_URL . '/assets/og.png';
+$canon     = APP_URL . strtok((string) ($_SERVER['REQUEST_URI'] ?? '/'), '?');
+?>
+<meta name="description" content="<?= e($metaDesc) ?>">
+<meta name="theme-color" content="#1a1a1a">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="<?= e($canon) ?>">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="<?= e(APP_NAME) ?>">
+<meta property="og:locale" content="bs_BA">
+<meta property="og:title" content="<?= e($fullTitle) ?>">
+<meta property="og:description" content="<?= e($metaDesc) ?>">
+<meta property="og:url" content="<?= e($canon) ?>">
+<meta property="og:image" content="<?= e($ogImage) ?>">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="<?= e($fullTitle) ?>">
+<meta name="twitter:description" content="<?= e($metaDesc) ?>">
+<meta name="twitter:image" content="<?= e($ogImage) ?>">
+
 <!-- Set the theme before paint to avoid a flash (dark is the default). -->
 <script>
 (function () {

@@ -14,8 +14,9 @@ require_once __DIR__ . '/includes/bootstrap.php';
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/judge.php';
 
-// Runs/day allowed for non-admins (admins are unlimited).
-const RUN_LIMIT_PER_DAY = 5;
+// Runs per rolling 24h: guests 5, logged-in users 20, admins unlimited.
+const RUN_LIMIT_GUEST = 5;
+const RUN_LIMIT_USER  = 20;
 
 /** Best-effort client IP (Fly sets Fly-Client-IP at the edge). */
 function client_ip(): string
@@ -62,13 +63,17 @@ if (strlen($source) > 200000 || strlen($stdin) > 1000000) {
 $pdo = db();
 $ip  = client_ip();
 
-// --- Rate limit: non-admins get RUN_LIMIT_PER_DAY runs per rolling 24h ----
+// --- Rate limit by login state (admins unlimited), counted per IP / 24h ----
 if (!is_admin()) {
+    $limit  = is_user() ? RUN_LIMIT_USER : RUN_LIMIT_GUEST;
     $cutoff = gmdate('Y-m-d H:i:s', time() - 86400);
     $cnt = $pdo->prepare('SELECT COUNT(*) FROM submissions WHERE ip = ? AND created_at >= ?');
     $cnt->execute([$ip, $cutoff]);
-    if ((int) $cnt->fetchColumn() >= RUN_LIMIT_PER_DAY) {
-        json_out(['error' => 'Dostigli ste dnevni limit od ' . RUN_LIMIT_PER_DAY . ' pokretanja. Pokušajte ponovo sutra.'], 429);
+    if ((int) $cnt->fetchColumn() >= $limit) {
+        $hint = is_user()
+            ? 'Dostigli ste dnevni limit od ' . $limit . ' pokretanja.'
+            : 'Dostigli ste dnevni limit od ' . $limit . ' pokretanja. Prijavi se za ' . RUN_LIMIT_USER . ' dnevno.';
+        json_out(['error' => $hint . ' Pokušajte ponovo za 24h.'], 429);
     }
 }
 

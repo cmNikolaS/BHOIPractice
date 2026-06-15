@@ -36,6 +36,14 @@ define('DB_SQLITE_PATH', getenv('DB_SQLITE_PATH') ?: (__DIR__ . DIRECTORY_SEPARA
 // ---------------------------------------------------------------------
 define('APP_NAME', 'BHOI Arhiva');
 
+// Absolute public URL (used for canonical + OpenGraph/Twitter meta). Override
+// via env if you move to a custom domain.
+define('APP_URL', rtrim((string) (getenv('APP_URL') ?: 'https://bhoipractice.fly.dev'), '/'));
+
+// Developer / donation links shown in the footer + "O sajtu" page.
+define('DEV_GITHUB_URL', getenv('DEV_GITHUB_URL') ?: 'https://github.com/cmNikolaS');
+define('DONATE_URL', getenv('DONATE_URL') ?: ''); // e.g. Ko-fi/PayPal; empty hides the button
+
 /**
  * BASE_URL — set this if the app lives in a sub-folder of the web root.
  * Example: app at  http://localhost/bhoi/  ->  BASE_URL = '/bhoi'

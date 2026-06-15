@@ -22,7 +22,7 @@ $page_title = $page_title ?? APP_NAME;
             <span class="grid h-9 w-9 place-items-center rounded-xl bg-brand text-[#1a1a1a] font-extrabold shadow-sm transition group-hover:scale-105">B</span>
             <span class="text-lg font-extrabold tracking-tight text-fg"><?= e(APP_NAME) ?></span>
         </a>
-        <nav class="flex items-center gap-1 text-sm font-medium">
+        <nav class="flex flex-wrap items-center justify-end gap-x-1 gap-y-1 text-sm font-medium">
             <a href="<?= e(url('index.php')) ?>" class="rounded-lg px-3 py-2 text-muted transition hover:bg-elevated hover:text-fg">Zadaci</a>
             <?php if (function_exists('is_user') && is_user()): ?>
                 <span class="rounded-lg px-3 py-2 font-semibold text-fg">👤 <?= e(current_user()['username']) ?></span>
