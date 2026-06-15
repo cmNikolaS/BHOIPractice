@@ -64,6 +64,8 @@ CREATE TABLE `tasks` (
     `year`           SMALLINT UNSIGNED NOT NULL,
     `level_id`       INT UNSIGNED NOT NULL,
     `difficulty`     ENUM('Lako','Srednje','Teško') NOT NULL DEFAULT 'Srednje',
+                                                      -- band label, derived from difficulty_rating
+    `difficulty_rating` TINYINT UNSIGNED NOT NULL DEFAULT 5, -- custom 1–10 estimate (source of truth)
     `problem_index`  VARCHAR(10) NULL,                -- e.g. "1", "A"
     `time_limit_ms`  INT UNSIGNED NULL,
     `memory_limit_mb`INT UNSIGNED NULL,
@@ -76,6 +78,7 @@ CREATE TABLE `tasks` (
     KEY `idx_tasks_year` (`year`),
     KEY `idx_tasks_level` (`level_id`),
     KEY `idx_tasks_difficulty` (`difficulty`),
+    KEY `idx_tasks_difficulty_rating` (`difficulty_rating`),
     CONSTRAINT `fk_tasks_level`
         FOREIGN KEY (`level_id`) REFERENCES `levels` (`id`)
         ON UPDATE CASCADE ON DELETE RESTRICT

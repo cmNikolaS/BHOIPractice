@@ -17,19 +17,23 @@ $pdo = db();
 
 // --- Reference data for the filter controls ---------------------------
 $levels = $pdo->query('SELECT id, name, slug FROM levels ORDER BY sort_order DESC')->fetchAll();
-// Only categories that are actually used by at least one task (no dead options).
-$tags = $pdo->query('
+// Algorithm categories actually used by at least one task (no dead options).
+// The school-level tags (osnovna/srednja/kombinovano) are excluded here so the
+// "Kategorija" filter lists algorithm topics (DP, Matematika, Grafovi …) only;
+// they still appear as chips in the table for context.
+$tags = $pdo->query("
     SELECT DISTINCT tg.id, tg.name, tg.slug
     FROM tags tg
     JOIN task_tags tt ON tt.tag_id = tg.id
+    WHERE tg.slug NOT IN ('osnovna-skola', 'srednja-skola', 'kombinovano')
     ORDER BY tg.name
-')->fetchAll();
+")->fetchAll();
 $years  = $pdo->query('SELECT DISTINCT year FROM tasks ORDER BY year DESC')->fetchAll(PDO::FETCH_COLUMN);
 
 // --- Tasks (with level + solution count) ------------------------------
 $sql = "
     SELECT
-        t.id, t.title, t.slug, t.year, t.difficulty, t.problem_index,
+        t.id, t.title, t.slug, t.year, t.difficulty, t.difficulty_rating, t.problem_index,
         t.pdf_path, t.tests_path,
         l.name  AS level_name,
         l.slug  AS level_slug,
@@ -155,6 +159,15 @@ require __DIR__ . '/includes/header.php';
             Prikazano <span id="result-count" class="font-semibold text-fg"><?= $total ?></span> od <?= $total ?>
         </p>
         <div class="flex items-center gap-2">
+            <label for="f-sort" class="text-xs font-semibold uppercase tracking-wide text-muted">Sortiraj</label>
+            <select id="f-sort" class="filter rounded-lg border border-line bg-elevated py-1.5 px-2.5 text-sm text-fg outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30">
+                <option value="">Zadano</option>
+                <option value="diff-asc">Težina ↑ (najlakši)</option>
+                <option value="diff-desc">Težina ↓ (najteži)</option>
+                <option value="year-desc">Godina (najnovije)</option>
+                <option value="year-asc">Godina (najstarije)</option>
+                <option value="title-asc">Naziv (A–Ž)</option>
+            </select>
             <button id="pick-random" class="inline-flex items-center gap-1.5 rounded-lg bg-accent/15 px-3 py-1.5 text-sm font-semibold text-accent transition hover:bg-accent/25">
                 🎲 Nasumičan
             </button>
@@ -193,6 +206,8 @@ require __DIR__ . '/includes/header.php';
                     data-year="<?= e((string) $t['year']) ?>"
                     data-level="<?= e($t['level_slug']) ?>"
                     data-difficulty="<?= e($t['difficulty']) ?>"
+                    data-rating="<?= (int) $t['difficulty_rating'] ?>"
+                    data-title="<?= e($t['title']) ?>"
                     data-tags="<?= e(implode(' ', $tagSlugs)) ?>"
                     data-search="<?= e($searchBlob) ?>"
                     data-url="<?= e($taskUrl) ?>">
@@ -213,8 +228,9 @@ require __DIR__ . '/includes/header.php';
                     </td>
 
                     <td class="px-5 py-4">
-                        <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset <?= difficulty_badge($t['difficulty']) ?>">
+                        <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset <?= difficulty_badge($t['difficulty']) ?>">
                             <?= e($t['difficulty']) ?>
+                            <span class="opacity-70">·&nbsp;<?= (int) $t['difficulty_rating'] ?></span>
                         </span>
                     </td>
 

@@ -16,9 +16,12 @@
     var level  = document.getElementById('f-level');
     var tag    = document.getElementById('f-tag');
     var year   = document.getElementById('f-year');
+    var sort   = document.getElementById('f-sort');
     var clear  = document.getElementById('clear-filters');
     var random = document.getElementById('pick-random');
+    var tbody  = document.getElementById('task-rows');
     var rows   = Array.prototype.slice.call(document.querySelectorAll('.task-row'));
+    var originalOrder = rows.slice(); // server-side default order ("Zadano")
     var count  = document.getElementById('result-count');
     var empty  = document.getElementById('empty-state');
     var solvedCountEl = document.getElementById('solved-count');
@@ -67,8 +70,33 @@
             level:  level.value,
             tag:    tag.value,
             year:   year.value,
+            sort:   sort ? sort.value : '',
         };
     }
+
+    /* ---- sorting (reorders the rows in the DOM) ---- */
+    function applySort() {
+        if (!tbody) return;
+        var mode = sort ? sort.value : '';
+        var ordered;
+        if (!mode) {
+            ordered = originalOrder;
+        } else {
+            ordered = originalOrder.slice().sort(function (a, b) {
+                switch (mode) {
+                    case 'diff-asc':  return num(a, 'rating') - num(b, 'rating');
+                    case 'diff-desc': return num(b, 'rating') - num(a, 'rating');
+                    case 'year-desc': return num(b, 'year') - num(a, 'year');
+                    case 'year-asc':  return num(a, 'year') - num(b, 'year');
+                    case 'title-asc': return (a.dataset.title || '').localeCompare(b.dataset.title || '', 'bs');
+                    default:          return 0;
+                }
+            });
+        }
+        ordered.forEach(function (row) { tbody.appendChild(row); });
+    }
+
+    function num(row, key) { return parseInt(row.dataset[key], 10) || 0; }
 
     function apply() {
         var f = getFilters();
@@ -98,6 +126,7 @@
         if (f.level)  p.set('level', f.level);
         if (f.tag)    p.set('tag', f.tag);
         if (f.year)   p.set('year', f.year);
+        if (f.sort)   p.set('sort', f.sort);
         var qs = p.toString();
         history.replaceState(null, '', qs ? '?' + qs : location.pathname);
     }
@@ -110,6 +139,7 @@
         if (p.has('level'))      level.value = p.get('level');
         if (p.has('tag'))        tag.value = p.get('tag');
         if (p.has('year'))       year.value = p.get('year');
+        if (p.has('sort') && sort) sort.value = p.get('sort');
     }
 
     /* ---- events ---- */
@@ -118,6 +148,10 @@
         el.addEventListener('input', apply);
         el.addEventListener('change', apply);
     });
+
+    if (sort) {
+        sort.addEventListener('change', function () { applySort(); apply(); });
+    }
 
     rows.forEach(function (row) {
         var btn = row.querySelector('.status-toggle');
@@ -134,7 +168,8 @@
 
     if (clear) {
         clear.addEventListener('click', function () {
-            [search, status, diff, level, tag, year].forEach(function (el) { if (el) el.value = ''; });
+            [search, status, diff, level, tag, year, sort].forEach(function (el) { if (el) el.value = ''; });
+            applySort();
             apply();
         });
     }
@@ -160,6 +195,7 @@
     });
 
     hydrateFromUrl();
+    applySort();
     applyDoneState();
     apply();
 })();

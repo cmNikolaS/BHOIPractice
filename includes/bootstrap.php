@@ -128,6 +128,26 @@ function difficulty_badge(string $difficulty): string
     };
 }
 
+/**
+ * Map a custom 1–10 difficulty rating to its band label.
+ * The rating is the single source of truth; the Lako/Srednje/Teško label
+ * (used for the colored badge and the band filter) is derived from it.
+ *   1–3 → Lako, 4–6 → Srednje, 7–10 → Teško
+ */
+function difficulty_band(?int $rating): string
+{
+    if ($rating === null || $rating <= 0) {
+        return 'Srednje';
+    }
+    if ($rating <= 3) {
+        return 'Lako';
+    }
+    if ($rating <= 6) {
+        return 'Srednje';
+    }
+    return 'Teško';
+}
+
 /** Human-readable file size. */
 function human_size(?int $bytes): string
 {

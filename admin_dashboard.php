@@ -37,7 +37,7 @@ if ($action === 'new' || $action === 'edit'):
 
     $task = [
         'id' => null, 'title' => '', 'statement' => '', 'year' => (int) date('Y'),
-        'level_id' => $levels[0]['id'] ?? null, 'difficulty' => 'Srednje',
+        'level_id' => $levels[0]['id'] ?? null, 'difficulty' => 'Srednje', 'difficulty_rating' => 5,
         'problem_index' => '', 'time_limit_ms' => '', 'memory_limit_mb' => '',
         'pdf_path' => null, 'tests_path' => null,
     ];
@@ -149,14 +149,11 @@ if ($action === 'new' || $action === 'edit'):
                                         <span class="font-medium text-fg"><?= e($sol['original_name']) ?></span>
                                         <span class="text-muted"><?= e($sol['language'] ? ' · ' . $sol['language'] : '') ?><?= $sol['file_size'] ? ' · ' . e(human_size((int) $sol['file_size'])) : '' ?></span>
                                     </span>
-                                    <form method="post" action="<?= e(url('admin_task_delete.php')) ?>"
-                                          onsubmit="return confirm('Obrisati ovo rješenje?');">
-                                        <?= csrf_field() ?>
-                                        <input type="hidden" name="type" value="solution">
-                                        <input type="hidden" name="id" value="<?= (int) $sol['id'] ?>">
-                                        <input type="hidden" name="task_id" value="<?= (int) $task['id'] ?>">
-                                        <button type="submit" class="rounded-md px-2 py-1 text-xs font-medium text-hard transition hover:bg-hard/15">Obriši</button>
-                                    </form>
+                                    <!-- The delete form lives OUTSIDE the main edit form (below); we
+                                         associate this button with it via the form= attribute. Nesting
+                                         a <form> here would prematurely close the main edit form. -->
+                                    <button type="submit" form="del-sol-<?= (int) $sol['id'] ?>"
+                                            class="rounded-md px-2 py-1 text-xs font-medium text-hard transition hover:bg-hard/15">Obriši</button>
                                 </li>
                             <?php endforeach; ?>
                         </ul>
@@ -190,12 +187,16 @@ if ($action === 'new' || $action === 'edit'):
                     <?php endforeach; ?>
                 </select>
 
-                <label class="mb-1 block text-sm font-medium text-fg" for="difficulty">Težina</label>
-                <select id="difficulty" name="difficulty" class="mb-3 <?= $inputCls ?>">
-                    <?php foreach (['Lako', 'Srednje', 'Teško'] as $d): ?>
-                        <option value="<?= e($d) ?>" <?= $task['difficulty'] === $d ? 'selected' : '' ?>><?= e($d) ?></option>
-                    <?php endforeach; ?>
-                </select>
+                <label class="mb-1 block text-sm font-medium text-fg" for="difficulty_rating">Težina (1–10)</label>
+                <?php $curRating = (int) ($task['difficulty_rating'] ?? 5); ?>
+                <input id="difficulty_rating" name="difficulty_rating" type="number" min="1" max="10" step="1" required
+                       value="<?= e((string) ($curRating ?: 5)) ?>" class="mb-1 <?= $inputCls ?>">
+                <p class="mb-3 text-xs text-muted">
+                    Vlastita procjena težine. Bedž se izvodi automatski:
+                    <span class="font-medium text-easy">1–3 Lako</span> ·
+                    <span class="font-medium text-medium">4–6 Srednje</span> ·
+                    <span class="font-medium text-hard">7–10 Teško</span>
+                </p>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
@@ -238,13 +239,26 @@ if ($action === 'new' || $action === 'edit'):
         </div>
     </form>
 
+    <?php /* Per-solution delete forms, kept outside the main edit form (see note above). */ ?>
+    <?php if ($isEdit && $solutions): ?>
+        <?php foreach ($solutions as $sol): ?>
+            <form id="del-sol-<?= (int) $sol['id'] ?>" method="post" action="<?= e(url('admin_task_delete.php')) ?>"
+                  class="hidden" onsubmit="return confirm('Obrisati ovo rješenje?');">
+                <?= csrf_field() ?>
+                <input type="hidden" name="type" value="solution">
+                <input type="hidden" name="id" value="<?= (int) $sol['id'] ?>">
+                <input type="hidden" name="task_id" value="<?= (int) $task['id'] ?>">
+            </form>
+        <?php endforeach; ?>
+    <?php endif; ?>
+
 <?php
 /* =====================================================================
  *  LIST VIEW (default)
  * ================================================================== */
 else:
     $sql = "
-        SELECT t.id, t.title, t.year, t.difficulty, t.problem_index, t.pdf_path, t.tests_path,
+        SELECT t.id, t.title, t.year, t.difficulty, t.difficulty_rating, t.problem_index, t.pdf_path, t.tests_path,
                l.name AS level_name, l.slug AS level_slug,
                (SELECT COUNT(*) FROM solutions s WHERE s.task_id = t.id) AS solution_count
         FROM tasks t
@@ -292,7 +306,7 @@ else:
                             <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset <?= level_badge($r['level_slug']) ?>"><?= e($r['level_name']) ?></span>
                         </td>
                         <td class="px-5 py-3.5">
-                            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset <?= difficulty_badge($r['difficulty']) ?>"><?= e($r['difficulty']) ?></span>
+                            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset <?= difficulty_badge($r['difficulty']) ?>"><?= e($r['difficulty']) ?> · <?= (int) $r['difficulty_rating'] ?></span>
                         </td>
                         <td class="px-5 py-3.5">
                             <div class="flex items-center gap-1 text-xs">

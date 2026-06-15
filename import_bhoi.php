@@ -136,11 +136,19 @@ function level_for_round(string $round): array {
     return ['Kvalifikacije', 'kvalifikacije', 10]; // all *kvalifikaciono / kvalifikacije
 }
 
-/** Round -> difficulty (heuristic: finals hardest, qualifiers easiest). */
-function difficulty_for_round(string $round): string {
-    if (str_starts_with($round, 'bhoi')) return 'Teško';
-    if ($round === 'jbhoi' || $round === 'bhgoi') return 'Srednje';
-    return 'Lako';
+/** Round -> initial 1–10 rating (heuristic: finals hardest, qualifiers easiest).
+ *  Just a starting point; classify_tasks.php sets a curated per-task rating. */
+function rating_for_round(string $round): int {
+    if (str_starts_with($round, 'bhoi')) return 7;        // Državno (BHOI) finals
+    if ($round === 'jbhoi' || $round === 'bhgoi') return 5;
+    return 3;                                             // qualifiers
+}
+
+/** 1–10 rating -> band label (mirrors difficulty_band() in bootstrap.php). */
+function band_for_rating(int $rating): string {
+    if ($rating <= 3) return 'Lako';
+    if ($rating <= 6) return 'Srednje';
+    return 'Teško';
 }
 
 /** Category -> [tag name, slug]. */
@@ -233,8 +241,8 @@ function ensure_tag(PDO $pdo, array &$cache, string $name, string $slug): int {
 
 /* --- import loop --------------------------------------------------- */
 $insTask = $pdo->prepare(
-    'INSERT INTO tasks (title, slug, statement, year, level_id, difficulty, problem_index, time_limit_ms, memory_limit_mb, pdf_path)
-     VALUES (?,?,?,?,?,?,?,?,?,?)'
+    'INSERT INTO tasks (title, slug, statement, year, level_id, difficulty, difficulty_rating, problem_index, time_limit_ms, memory_limit_mb, pdf_path)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?)'
 );
 $ignorePrefix = DB_DRIVER === 'sqlite' ? 'INSERT OR IGNORE' : 'INSERT IGNORE';
 $insTag = $pdo->prepare($ignorePrefix . ' INTO task_tags (task_id, tag_id) VALUES (?,?)');
@@ -316,7 +324,8 @@ foreach ($problemDirs as $dir) {
     // level + tags
     [$lvlName, $lvlSlug, $lvlSort] = level_for_round($round);
     $lid = ensure_level($pdo, $levelId, $lvlName, $lvlSlug, $lvlSort);
-    $difficulty = difficulty_for_round($round);
+    $rating = rating_for_round($round);
+    $difficulty = band_for_rating($rating);
 
     // unique slug
     $base = slugify($name . '-' . $round . '-' . $year) ?: ('zadatak-' . $year . '-' . $i);
@@ -325,7 +334,7 @@ foreach ($problemDirs as $dir) {
     $usedSlugs[$slug] = true;
 
     // insert task
-    $insTask->execute([$title, $slug, $statement, $year, $lid, $difficulty, null, $timeMs, $memMb, $pdfPath]);
+    $insTask->execute([$title, $slug, $statement, $year, $lid, $difficulty, $rating, null, $timeMs, $memMb, $pdfPath]);
     $taskId = (int) $pdo->lastInsertId();
     $stats['tasks']++;
 

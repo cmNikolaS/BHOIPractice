@@ -38,6 +38,8 @@ CREATE TABLE tasks (
     level_id        INTEGER NOT NULL,
     difficulty      TEXT NOT NULL DEFAULT 'Srednje'
                     CHECK (difficulty IN ('Lako','Srednje','Teško')),
+    difficulty_rating INTEGER NOT NULL DEFAULT 5
+                    CHECK (difficulty_rating BETWEEN 1 AND 10),
     problem_index   TEXT,
     time_limit_ms   INTEGER,
     memory_limit_mb INTEGER,
@@ -50,6 +52,7 @@ CREATE TABLE tasks (
 CREATE INDEX idx_tasks_year ON tasks (year);
 CREATE INDEX idx_tasks_level ON tasks (level_id);
 CREATE INDEX idx_tasks_difficulty ON tasks (difficulty);
+CREATE INDEX idx_tasks_difficulty_rating ON tasks (difficulty_rating);
 
 CREATE TABLE task_tags (
     task_id INTEGER NOT NULL,

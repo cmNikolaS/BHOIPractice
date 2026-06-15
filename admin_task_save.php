@@ -28,7 +28,10 @@ $title         = trim((string) ($_POST['title'] ?? ''));
 $statement     = trim((string) ($_POST['statement'] ?? ''));
 $year          = filter_input(INPUT_POST, 'year', FILTER_VALIDATE_INT);
 $levelId       = filter_input(INPUT_POST, 'level_id', FILTER_VALIDATE_INT);
-$difficulty    = (string) ($_POST['difficulty'] ?? 'Srednje');
+// Difficulty is a custom 1–10 rating (source of truth); the band label is derived.
+$rating        = (int) ($_POST['difficulty_rating'] ?? 5);
+$rating        = max(1, min(10, $rating));
+$difficulty    = difficulty_band($rating);
 $problemIndex  = trim((string) ($_POST['problem_index'] ?? ''));
 $timeLimit     = filter_input(INPUT_POST, 'time_limit_ms', FILTER_VALIDATE_INT) ?: null;
 $memoryLimit   = filter_input(INPUT_POST, 'memory_limit_mb', FILTER_VALIDATE_INT) ?: null;
@@ -38,7 +41,6 @@ $errors = [];
 if ($title === '')                                   $errors[] = 'Naziv je obavezan.';
 if (!$year || $year < 1990 || $year > 2100)          $errors[] = 'Godina je neispravna.';
 if (!$levelId)                                       $errors[] = 'Nivo je obavezan.';
-if (!in_array($difficulty, ['Lako', 'Srednje', 'Teško'], true)) $difficulty = 'Srednje';
 
 if ($errors) {
     foreach ($errors as $msg) {
@@ -68,12 +70,12 @@ try {
         $stmt = $pdo->prepare("
             UPDATE tasks SET
                 title = ?, slug = ?, statement = ?, year = ?, level_id = ?,
-                difficulty = ?, problem_index = ?, time_limit_ms = ?, memory_limit_mb = ?,
+                difficulty = ?, difficulty_rating = ?, problem_index = ?, time_limit_ms = ?, memory_limit_mb = ?,
                 updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
         ");
         $stmt->execute([
-            $title, $slug, $statement, $year, $levelId, $difficulty,
+            $title, $slug, $statement, $year, $levelId, $difficulty, $rating,
             $problemIndex !== '' ? $problemIndex : null,
             $timeLimit, $memoryLimit, $id,
         ]);
@@ -81,11 +83,11 @@ try {
     } else {
         $stmt = $pdo->prepare("
             INSERT INTO tasks
-                (title, slug, statement, year, level_id, difficulty, problem_index, time_limit_ms, memory_limit_mb)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (title, slug, statement, year, level_id, difficulty, difficulty_rating, problem_index, time_limit_ms, memory_limit_mb)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         $stmt->execute([
-            $title, $slug, $statement, $year, $levelId, $difficulty,
+            $title, $slug, $statement, $year, $levelId, $difficulty, $rating,
             $problemIndex !== '' ? $problemIndex : null,
             $timeLimit, $memoryLimit,
         ]);
