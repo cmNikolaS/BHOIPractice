@@ -160,6 +160,27 @@ CREATE TABLE IF NOT EXISTS `task_tests` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------
+--  users — visitor accounts (simple username/password) + their progress.
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `users` (
+    `id`            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `username`      VARCHAR(30) NOT NULL,
+    `password_hash` VARCHAR(255) NOT NULL,
+    `created_at`    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uq_users_username` (`username`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `user_progress` (
+    `user_id` INT UNSIGNED NOT NULL,
+    `data`    MEDIUMTEXT NOT NULL,           -- JSON array of solved task ids
+    PRIMARY KEY (`user_id`),
+    CONSTRAINT `fk_progress_user`
+        FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+        ON UPDATE CASCADE ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------------------------
 --  admins — back-office accounts. Passwords stored as bcrypt hashes.
 -- ---------------------------------------------------------------------
 CREATE TABLE `admins` (

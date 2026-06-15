@@ -461,10 +461,18 @@ require __DIR__ . '/includes/header.php';
         markBtn.addEventListener('click', function () {
             var s = getDone();
             if (s.has(taskId)) { s.delete(taskId); } else { s.add(taskId); }
-            try { localStorage.setItem(DONE_KEY, JSON.stringify(Array.from(s))); } catch (e) {}
+            var arr = Array.from(s);
+            try { localStorage.setItem(DONE_KEY, JSON.stringify(arr)); } catch (e) {}
+            if (window.bhoiSaveProgress) window.bhoiSaveProgress(arr);  // sync to account if logged in
             render();
         });
         render();
+        // Logged-in: pull account progress so the toggle reflects other devices.
+        if (window.bhoiLoadProgress) {
+            window.bhoiLoadProgress().then(function (arr) {
+                if (arr) { try { localStorage.setItem(DONE_KEY, JSON.stringify(arr.map(String))); } catch (e) {} render(); }
+            });
+        }
     }
 
     // --- Map a filename extension to a highlight.js language ---

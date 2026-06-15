@@ -24,6 +24,12 @@ $page_title = $page_title ?? APP_NAME;
         </a>
         <nav class="flex items-center gap-1 text-sm font-medium">
             <a href="<?= e(url('index.php')) ?>" class="rounded-lg px-3 py-2 text-muted transition hover:bg-elevated hover:text-fg">Zadaci</a>
+            <?php if (function_exists('is_user') && is_user()): ?>
+                <span class="rounded-lg px-3 py-2 font-semibold text-fg">👤 <?= e(current_user()['username']) ?></span>
+                <a href="<?= e(url('logout.php')) ?>" class="rounded-lg px-3 py-2 text-muted transition hover:bg-elevated hover:text-fg">Odjava</a>
+            <?php else: ?>
+                <a href="<?= e(url('login.php')) ?>" class="rounded-lg px-3 py-2 text-muted transition hover:bg-elevated hover:text-fg">Prijava</a>
+            <?php endif; ?>
             <?php if (function_exists('is_admin') && is_admin()): ?>
                 <a href="<?= e(url('admin_dashboard.php')) ?>" class="rounded-lg px-3 py-2 text-muted transition hover:bg-elevated hover:text-fg">Admin panel</a>
             <?php else: ?>
@@ -39,6 +45,30 @@ $page_title = $page_title ?? APP_NAME;
         </nav>
     </div>
 </header>
+
+<script>
+window.BHOI_AUTH = { user: <?= is_user() ? 'true' : 'false' ?>, progressUrl: <?= json_encode(url('progress.php')) ?>, csrf: <?= json_encode(csrf_token()) ?> };
+(function () {
+    var A = window.BHOI_AUTH, t = null;
+    window.bhoiLoadProgress = function () {
+        if (!A.user) return Promise.resolve(null);
+        return fetch(A.progressUrl, { credentials: 'same-origin' })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (j) { return (j && j.solved) ? j.solved : null; })
+            .catch(function () { return null; });
+    };
+    window.bhoiSaveProgress = function (arr) {
+        if (!A.user) return;
+        clearTimeout(t);
+        t = setTimeout(function () {
+            var b = new URLSearchParams();
+            b.set('csrf_token', A.csrf); b.set('solved', JSON.stringify(arr));
+            fetch(A.progressUrl, { method: 'POST', credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: b.toString() }).catch(function () {});
+        }, 600);
+    };
+})();
+</script>
 
 <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
 <?php

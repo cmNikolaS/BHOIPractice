@@ -57,6 +57,26 @@ foreach ($tagRows as $tr) {
 }
 
 $total = count($tasks);
+
+// --- "Zadaci dana": one task per difficulty band, deterministic per day -----
+// Same 3 for everyone on a given (UTC) day, changes at midnight, independent
+// of whether they've been solved. Seeded by the date so it's stable all day.
+$dailyByBand = ['Lako' => [], 'Srednje' => [], 'Teško' => []];
+foreach ($tasks as $t) {
+    if (isset($dailyByBand[$t['difficulty']])) {
+        $dailyByBand[$t['difficulty']][] = $t;
+    }
+}
+$today = gmdate('Y-m-d');
+$dailyTasks = [];
+foreach (['Lako', 'Srednje', 'Teško'] as $band) {
+    $pool = $dailyByBand[$band];
+    if ($pool) {
+        $idx = (int) (sprintf('%u', crc32($today . '|' . $band)) % count($pool));
+        $dailyTasks[$band] = $pool[$idx];
+    }
+}
+
 $page_title = 'Zadaci';
 require __DIR__ . '/includes/header.php';
 ?>
@@ -118,6 +138,39 @@ require __DIR__ . '/includes/header.php';
         </div>
     </div>
 </section>
+
+<?php if ($dailyTasks): ?>
+<!-- ===== Zadaci dana ===== -->
+<section class="mb-5">
+    <div class="mb-2 flex items-center gap-2">
+        <h2 class="text-sm font-semibold uppercase tracking-wide text-muted">🎯 Zadaci dana</h2>
+        <span class="text-xs text-muted">— po jedan iz svake težine, mijenjaju se svaki dan</span>
+    </div>
+    <div class="grid gap-3 sm:grid-cols-3">
+        <?php
+        $bandColor = ['Lako' => '#1cb8a8', 'Srednje' => '#ffb700', 'Teško' => '#f63737'];
+        foreach (['Lako', 'Srednje', 'Teško'] as $band):
+            if (empty($dailyTasks[$band])) continue;
+            $dt = $dailyTasks[$band];
+            $dtUrl = url('task.php?id=' . (int) $dt['id']);
+        ?>
+        <a href="<?= e($dtUrl) ?>" class="group relative overflow-hidden rounded-2xl border border-line bg-card p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md">
+            <span class="absolute inset-x-0 top-0 h-1" style="background:<?= $bandColor[$band] ?>"></span>
+            <div class="mb-2 flex items-center justify-between">
+                <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset <?= difficulty_badge($band) ?>">
+                    <?= e($band) ?> <span class="opacity-70">·&nbsp;<?= (int) $dt['difficulty_rating'] ?></span>
+                </span>
+                <span class="tabular-nums text-xs text-muted"><?= e((string) $dt['year']) ?></span>
+            </div>
+            <h3 class="text-base font-bold leading-snug text-fg transition group-hover:text-accent">
+                <?= e($dt['title']) ?>
+            </h3>
+            <p class="mt-1 text-xs text-muted"><?= e($dt['level_name']) ?></p>
+        </a>
+        <?php endforeach; ?>
+    </div>
+</section>
+<?php endif; ?>
 
 <!-- ===== Filter bar ===== -->
 <section class="mb-5 rounded-2xl border border-line bg-card p-4 shadow-sm sm:p-5">

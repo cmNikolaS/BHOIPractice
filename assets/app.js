@@ -45,7 +45,9 @@
         catch (e) { return new Set(); }
     }
     function saveDone(set) {
-        try { localStorage.setItem(KEY, JSON.stringify(Array.from(set))); } catch (e) {}
+        var arr = Array.from(set);
+        try { localStorage.setItem(KEY, JSON.stringify(arr)); } catch (e) {}
+        if (window.bhoiSaveProgress) window.bhoiSaveProgress(arr);   // sync to account if logged in
     }
     var done = getDone();
 
@@ -228,4 +230,16 @@
     applySort();
     applyDoneState();
     apply();
+
+    // Logged-in users: pull progress from the account (source of truth) and re-render.
+    if (window.bhoiLoadProgress) {
+        window.bhoiLoadProgress().then(function (arr) {
+            if (arr) {
+                done = new Set(arr.map(String));
+                try { localStorage.setItem(KEY, JSON.stringify(arr.map(String))); } catch (e) {}
+                applyDoneState();
+                apply();
+            }
+        });
+    }
 })();

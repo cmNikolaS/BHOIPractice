@@ -34,6 +34,8 @@ sqlite3 "$DB_PATH" "ALTER TABLE tasks ADD COLUMN difficulty_rating INTEGER NOT N
 sqlite3 "$DB_PATH" "CREATE TABLE IF NOT EXISTS submissions (id INTEGER PRIMARY KEY AUTOINCREMENT, task_id INTEGER, language TEXT NOT NULL, source TEXT NOT NULL, status TEXT, time_ms INTEGER, memory_kb INTEGER, ip TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (task_id) REFERENCES tasks (id) ON UPDATE CASCADE ON DELETE SET NULL)" 2>/dev/null || true
 sqlite3 "$DB_PATH" "ALTER TABLE submissions ADD COLUMN ip TEXT" 2>/dev/null || true
 sqlite3 "$DB_PATH" "CREATE TABLE IF NOT EXISTS task_tests (id INTEGER PRIMARY KEY AUTOINCREMENT, task_id INTEGER NOT NULL, idx INTEGER NOT NULL, input_path TEXT NOT NULL, output_path TEXT NOT NULL, FOREIGN KEY (task_id) REFERENCES tasks (id) ON UPDATE CASCADE ON DELETE CASCADE)" 2>/dev/null || true
+sqlite3 "$DB_PATH" "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)" 2>/dev/null || true
+sqlite3 "$DB_PATH" "CREATE TABLE IF NOT EXISTS user_progress (user_id INTEGER PRIMARY KEY, data TEXT NOT NULL, FOREIGN KEY (user_id) REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE)" 2>/dev/null || true
 
 # The web server owns the data it reads/writes (uploads, sqlite WAL).
 chown -R www-data:www-data "$DATA_DIR" || true

@@ -101,6 +101,19 @@ CREATE TABLE task_tests (
 );
 CREATE INDEX idx_tasktests_task ON task_tests (task_id, idx);
 
+CREATE TABLE users (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    username      TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    created_at    TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE user_progress (
+    user_id INTEGER PRIMARY KEY,
+    data    TEXT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
 CREATE TABLE admins (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     username      TEXT NOT NULL UNIQUE,
