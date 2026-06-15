@@ -46,6 +46,7 @@ $langKey = (string) ($_POST['language'] ?? '');
 $source  = (string) ($_POST['source'] ?? '');
 $stdin   = (string) ($_POST['stdin'] ?? '');
 $taskId  = filter_input(INPUT_POST, 'task_id', FILTER_VALIDATE_INT) ?: null;
+$mode    = (($_POST['mode'] ?? 'run') === 'judge') ? 'judge' : 'run';
 
 $langs = judge_languages();
 if (!isset($langs[$langKey])) {
@@ -80,6 +81,68 @@ if ($taskId) {
     if ($ms > 0) { $cpu = min(15.0, max(0.5, $ms / 1000)); }
 }
 
+// =====================================================================
+//  JUDGE mode — run against the task's official in/out tests, count passes
+// =====================================================================
+if ($mode === 'judge') {
+    if (!$taskId) {
+        json_out(['error' => 'Nedostaje zadatak.'], 422);
+    }
+    $ts = $pdo->prepare('SELECT idx, input_path, output_path FROM task_tests WHERE task_id = ? ORDER BY idx');
+    $ts->execute([$taskId]);
+    $rows = $ts->fetchAll();
+    if (!$rows) {
+        json_out(['error' => 'Ovaj zadatak nema zvaničnih test primjera.'], 422);
+    }
+
+    $cppId = $langs['cpp']['id'];
+    $total = count($rows);
+    $cap   = judge_max_tests();
+    $eval  = array_slice($rows, 0, $cap);
+    $passed = 0; $details = []; $firstBad = null; $compile = '';
+
+    foreach ($eval as $t) {
+        $in  = gh_raw($t['input_path']);
+        $exp = gh_raw($t['output_path']);
+        if ($in === null || $exp === null) {
+            $details[] = ['idx' => (int) $t['idx'], 'status' => 'Test nedostupan', 'ok' => false];
+            continue;
+        }
+        $res = judge_run($source, $cppId, $in, $exp, $cpu);
+        if (isset($res['error'])) { // judge/quota failure: stop, report partial
+            json_out(['mode' => 'judge', 'error' => $res['error'],
+                      'passed' => $passed, 'total' => $total, 'evaluated' => count($details)], 502);
+        }
+        $sid = (int) $res['status_id'];
+        $ok  = ($sid === 3); // Accepted
+        if ($ok) { $passed++; } elseif ($firstBad === null) { $firstBad = $res['status']; }
+        $details[] = ['idx' => (int) $t['idx'], 'status' => $res['status'], 'ok' => $ok, 'time' => $res['time']];
+        if ($sid === 6) { $compile = $res['compile']; break; } // compile error is the same for every test
+    }
+
+    $verdict = ($compile !== '') ? 'Greška pri kompajliranju'
+             : (($passed === count($details) && $passed === $total) ? 'Sva prošla' : ($firstBad ?: 'Pogrešan odgovor'));
+
+    try {
+        $pdo->prepare('INSERT INTO submissions (task_id, language, source, status, ip) VALUES (?,?,?,?,?)')
+            ->execute([$taskId, $langKey, $source, "judge: $passed/$total", $ip]);
+    } catch (Throwable $e) {}
+
+    json_out([
+        'mode'      => 'judge',
+        'passed'    => $passed,
+        'total'     => $total,
+        'evaluated' => count($details),
+        'capped'    => $total > $cap,
+        'verdict'   => $verdict,
+        'compile'   => $compile,
+        'details'   => $details,
+    ]);
+}
+
+// =====================================================================
+//  RUN mode — run once against custom stdin
+// =====================================================================
 $result = judge_run($source, $langs[$langKey]['id'], $stdin, null, $cpu);
 
 if (isset($result['error'])) {

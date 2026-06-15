@@ -142,6 +142,24 @@ CREATE TABLE IF NOT EXISTS `submissions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------
+--  task_tests — references (repo paths) to a task's official in/out test
+--  cases. Only PATHS are stored; the files themselves are fetched on
+--  demand from GitHub at judge time (the full set is ~1GB).
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `task_tests` (
+    `id`          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `task_id`     INT UNSIGNED NOT NULL,
+    `idx`         INT UNSIGNED NOT NULL,
+    `input_path`  VARCHAR(500) NOT NULL,
+    `output_path` VARCHAR(500) NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY `idx_tt_task` (`task_id`, `idx`),
+    CONSTRAINT `fk_tasktests_task`
+        FOREIGN KEY (`task_id`) REFERENCES `tasks` (`id`)
+        ON UPDATE CASCADE ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------------------------
 --  admins — back-office accounts. Passwords stored as bcrypt hashes.
 -- ---------------------------------------------------------------------
 CREATE TABLE `admins` (

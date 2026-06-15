@@ -66,6 +66,9 @@ $solStmt = $pdo->prepare("
 $solStmt->execute([$id]);
 $solutions = $solStmt->fetchAll();
 
+// --- Official test cases available? (count only; files fetched at judge time)
+$testCount = (int) $pdo->query('SELECT COUNT(*) FROM task_tests WHERE task_id = ' . (int) $id)->fetchColumn();
+
 $page_title = $task['title'];
 require __DIR__ . '/includes/header.php';
 ?>
@@ -233,81 +236,129 @@ require __DIR__ . '/includes/header.php';
 </div>
 
 <?php if (judge_enabled()): ?>
-<!-- ===== Run code (Judge0) — shown only when the judge is configured ===== -->
+<!-- ===== Solve: run vs custom input + judge vs official tests ===== -->
 <section class="mt-6 overflow-hidden rounded-2xl border border-line bg-card shadow-sm">
-    <div class="flex items-center justify-between border-b border-line px-5 py-3">
-        <h2 class="text-sm font-semibold uppercase tracking-wide text-muted">Pokreni kod</h2>
-        <select id="run-lang" class="rounded-lg border border-line bg-elevated px-3 py-1.5 text-sm text-fg outline-none">
-            <?php foreach (judge_languages() as $key => $l): ?>
-                <option value="<?= e($key) ?>"<?= $key === 'cpp' ? ' selected' : '' ?>><?= e($l['label']) ?></option>
-            <?php endforeach; ?>
-        </select>
-    </div>
-    <div class="grid gap-4 p-5 lg:grid-cols-2">
-        <div>
-            <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted" for="run-source">Izvorni kod</label>
-            <textarea id="run-source" rows="14" spellcheck="false"
-                class="w-full rounded-xl border border-line bg-[#0d1117] px-3 py-2.5 font-mono text-[13px] leading-6 text-fg outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
-                placeholder="// zalijepi svoj kod ovdje"></textarea>
+    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-line px-5 py-3">
+        <h2 class="text-sm font-semibold uppercase tracking-wide text-muted">Riješi zadatak</h2>
+        <div class="flex items-center gap-2 text-xs">
+            <span class="rounded-md bg-accent/15 px-2 py-0.5 font-semibold text-accent">C++</span>
+            <?php if ($testCount > 0): ?>
+                <span class="rounded-md bg-easy/15 px-2 py-0.5 font-medium text-easy"><?= $testCount ?> zvaničnih test primjera</span>
+            <?php else: ?>
+                <span class="rounded-md bg-elevated px-2 py-0.5 font-medium text-muted">Nema zvaničnih test primjera</span>
+            <?php endif; ?>
         </div>
-        <div class="flex flex-col gap-4">
+    </div>
+
+    <div class="p-5">
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted" for="solve-source">Tvoj kod (C++)</label>
+        <textarea id="solve-source" rows="14" spellcheck="false"
+            class="w-full rounded-xl border border-line bg-[#0d1117] px-3 py-2.5 font-mono text-[13px] leading-6 text-fg outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
+            placeholder="#include &lt;bits/stdc++.h&gt;&#10;using namespace std;&#10;int main(){&#10;    // tvoje rješenje&#10;}"></textarea>
+
+        <div class="mt-4 grid gap-4 lg:grid-cols-2">
             <div>
-                <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted" for="run-stdin">Ulaz (stdin)</label>
-                <textarea id="run-stdin" rows="5" spellcheck="false"
+                <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted" for="solve-stdin">Vlastiti ulaz <span class="font-normal normal-case opacity-60">(za „Pokreni")</span></label>
+                <textarea id="solve-stdin" rows="6" spellcheck="false"
                     class="w-full rounded-xl border border-line bg-elevated px-3 py-2.5 font-mono text-[13px] leading-6 text-fg outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
-                    placeholder="ulazni podaci za test"></textarea>
+                    placeholder="npr.&#10;3 5"></textarea>
             </div>
             <div>
-                <div class="mb-1 flex items-center justify-between">
-                    <label class="text-xs font-semibold uppercase tracking-wide text-muted">Izlaz</label>
-                    <span id="run-meta" class="text-xs text-muted"></span>
+                <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted">Rezultat</label>
+                <div id="solve-result" class="min-h-[8.5rem] rounded-xl border border-line bg-[#0d1117] p-3 text-[13px] leading-6">
+                    <span class="text-muted">Pokreni kod na vlastitom ulazu ili ga ocijeni protiv zvaničnih test primjera.</span>
                 </div>
-                <pre id="run-output" class="m-0 max-h-48 overflow-auto rounded-xl border border-line bg-[#0d1117] px-3 py-2.5 font-mono text-[13px] leading-6 text-fg whitespace-pre-wrap"></pre>
             </div>
         </div>
     </div>
-    <div class="flex items-center gap-3 border-t border-line px-5 py-3">
-        <button id="run-btn" type="button"
-            class="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-110 disabled:opacity-60">
+
+    <div class="flex flex-wrap items-center gap-3 border-t border-line px-5 py-3">
+        <button id="solve-run" type="button"
+            class="inline-flex items-center gap-1.5 rounded-xl border border-line bg-elevated px-4 py-2 text-sm font-semibold text-fg transition hover:border-accent hover:text-accent disabled:opacity-60">
             ▶ Pokreni
         </button>
-        <span id="run-status" class="text-sm font-medium text-muted"></span>
-        <span class="ml-auto text-xs text-muted">Kompajlira i pokreće preko Judge0 · provjera protiv zvaničnih test primjera uskoro</span>
+        <button id="solve-judge" type="button" <?= $testCount > 0 ? '' : 'disabled' ?>
+            class="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+            title="<?= $testCount > 0 ? 'Ocijeni protiv svih zvaničnih test primjera' : 'Ovaj zadatak nema zvaničnih test primjera' ?>">
+            ✓ Ocijeni<?= $testCount > 0 ? '' : ' (nedostupno)' ?>
+        </button>
+        <span id="solve-status" class="text-sm font-medium text-muted"></span>
+        <span class="ml-auto text-xs text-muted">Kompajlira i izvršava preko Judge0 (Clang)</span>
     </div>
 </section>
 
 <script>
 (function () {
-    var btn = document.getElementById('run-btn'); if (!btn) return;
+    var runBtn = document.getElementById('solve-run'); if (!runBtn) return;
+    var judgeBtn = document.getElementById('solve-judge');
     var CSRF = <?= json_encode(csrf_token()) ?>;
     var TASK = <?= (int) $task['id'] ?>;
-    var out = document.getElementById('run-output');
-    var statusEl = document.getElementById('run-status');
-    var metaEl = document.getElementById('run-meta');
-    btn.addEventListener('click', function () {
-        var src = document.getElementById('run-source').value;
-        if (!src.trim()) { statusEl.textContent = 'Unesi kod.'; return; }
-        btn.disabled = true; statusEl.textContent = 'Pokrećem…'; out.textContent = ''; metaEl.textContent = '';
+    var ENDPOINT = '<?= e(url('submit.php')) ?>';
+    var resultEl = document.getElementById('solve-result');
+    var statusEl = document.getElementById('solve-status');
+
+    function esc(s) { var d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+    function setBusy(b, msg) { runBtn.disabled = b; if (judgeBtn) judgeBtn.disabled = b || !TESTS; statusEl.textContent = msg || ''; }
+    var TESTS = <?= $testCount ?>;
+
+    function post(extra, onOk) {
         var body = new URLSearchParams();
-        body.set('csrf_token', CSRF);
-        body.set('task_id', TASK);
-        body.set('language', document.getElementById('run-lang').value);
-        body.set('source', src);
-        body.set('stdin', document.getElementById('run-stdin').value);
-        fetch('<?= e(url('submit.php')) ?>', { method: 'POST', credentials: 'same-origin',
+        body.set('csrf_token', CSRF); body.set('task_id', TASK);
+        body.set('language', 'cpp'); body.set('source', document.getElementById('solve-source').value);
+        Object.keys(extra).forEach(function (k) { body.set(k, extra[k]); });
+        return fetch(ENDPOINT, { method: 'POST', credentials: 'same-origin',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() })
-            .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+            .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); });
+    }
+
+    // ---- Run against custom input ----
+    runBtn.addEventListener('click', function () {
+        if (!document.getElementById('solve-source').value.trim()) { statusEl.textContent = 'Unesi kod.'; return; }
+        setBusy(true, 'Pokrećem…'); resultEl.innerHTML = '<span class="text-muted">Pokrećem…</span>';
+        post({ mode: 'run', stdin: document.getElementById('solve-stdin').value }, null)
             .then(function (res) {
                 var j = res.j;
-                if (!res.ok || j.error) { statusEl.textContent = j.error || 'Greška.'; return; }
+                if (!res.ok || j.error) { statusEl.textContent = j.error || 'Greška.'; resultEl.innerHTML = '<span class="text-hard">' + esc(j.error || 'Greška.') + '</span>'; return; }
                 statusEl.textContent = j.status || 'Gotovo';
-                var t = j.time != null ? (j.time + ' s') : '';
-                var m = j.memory != null ? (Math.round(j.memory / 1024) + ' MB') : '';
-                metaEl.textContent = [t, m].filter(Boolean).join(' · ');
-                out.textContent = j.compile ? j.compile : (j.stdout || '') + (j.stderr ? '\n' + j.stderr : '');
+                var meta = [j.time != null ? j.time + ' s' : '', j.memory != null ? Math.round(j.memory / 1024) + ' MB' : ''].filter(Boolean).join(' · ');
+                var txt = j.compile ? j.compile : ((j.stdout || '') + (j.stderr ? '\n' + j.stderr : ''));
+                resultEl.innerHTML = '<div class="mb-1 text-xs text-muted">' + esc(j.status) + (meta ? ' · ' + esc(meta) : '') + '</div>'
+                    + '<pre class="m-0 max-h-56 overflow-auto whitespace-pre-wrap font-mono text-fg">' + esc(txt || '(prazan izlaz)') + '</pre>';
             })
             .catch(function () { statusEl.textContent = 'Mreža/server greška.'; })
-            .finally(function () { btn.disabled = false; });
+            .finally(function () { setBusy(false, statusEl.textContent); });
+    });
+
+    // ---- Judge against official tests ----
+    if (judgeBtn) judgeBtn.addEventListener('click', function () {
+        if (!document.getElementById('solve-source').value.trim()) { statusEl.textContent = 'Unesi kod.'; return; }
+        setBusy(true, 'Ocjenjujem… (može potrajati)'); resultEl.innerHTML = '<span class="text-muted">Ocjenjujem protiv zvaničnih test primjera…</span>';
+        post({ mode: 'judge' }, null)
+            .then(function (res) {
+                var j = res.j;
+                if (j.error && j.passed == null) { statusEl.textContent = j.error; resultEl.innerHTML = '<span class="text-hard">' + esc(j.error) + '</span>'; return; }
+                var passed = j.passed || 0, total = j.total || 0, pct = total ? Math.round(passed / total * 100) : 0;
+                var allOk = passed === total && total > 0;
+                statusEl.textContent = j.verdict || (passed + '/' + total);
+                var html = '';
+                html += '<div class="flex items-baseline justify-between"><span class="text-base font-bold ' + (allOk ? 'text-easy' : 'text-fg') + '">' + passed + ' / ' + total + ' test primjera prošlo</span>'
+                      + '<span class="rounded-md px-2 py-0.5 text-xs font-semibold ' + (allOk ? 'bg-easy/15 text-easy' : 'bg-hard/15 text-hard') + '">' + esc(j.verdict || '') + '</span></div>';
+                html += '<div class="my-2 h-2 w-full overflow-hidden rounded-full bg-elevated"><div class="h-full rounded-full ' + (allOk ? 'bg-easy' : 'bg-medium') + '" style="width:' + pct + '%"></div></div>';
+                if (j.compile) {
+                    html += '<pre class="m-0 mt-1 max-h-40 overflow-auto whitespace-pre-wrap font-mono text-hard">' + esc(j.compile) + '</pre>';
+                } else if (j.details) {
+                    html += '<div class="mt-2 flex flex-wrap gap-1">';
+                    j.details.forEach(function (d, i) {
+                        html += '<span title="Test ' + (i + 1) + ': ' + esc(d.status) + '" class="grid h-6 min-w-[1.5rem] place-items-center rounded text-[10px] font-bold ' + (d.ok ? 'bg-easy/20 text-easy' : 'bg-hard/20 text-hard') + '">' + (i + 1) + '</span>';
+                    });
+                    html += '</div>';
+                }
+                if (j.error) { html += '<div class="mt-2 text-xs text-hard">' + esc(j.error) + '</div>'; }
+                if (j.capped) { html += '<div class="mt-2 text-xs text-muted">Ocijenjeno prvih ' + j.evaluated + ' od ' + total + ' (limit po pokretanju).</div>'; }
+                resultEl.innerHTML = html;
+            })
+            .catch(function () { statusEl.textContent = 'Mreža/server greška.'; })
+            .finally(function () { setBusy(false, statusEl.textContent); });
     });
 })();
 </script>

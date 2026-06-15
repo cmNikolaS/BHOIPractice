@@ -11,7 +11,7 @@ FROM php:8.2-apache
 # System libraries + PHP extensions.
 #   libonig-dev -> mbstring | sqlite3 CLI -> load schema | ca-certificates -> HTTPS
 RUN apt-get update \
- && apt-get install -y --no-install-recommends libonig-dev sqlite3 ca-certificates \
+ && apt-get install -y --no-install-recommends libonig-dev sqlite3 ca-certificates poppler-utils \
  && rm -rf /var/lib/apt/lists/* \
  && docker-php-ext-install pdo_mysql mbstring
 # (pdo_sqlite, curl, fileinfo, openssl are bundled/enabled in the base image.)
@@ -36,6 +36,10 @@ RUN set -eux; \
         php import_legacy.php; \
     DB_DRIVER=sqlite DB_SQLITE_PATH=/seed/app.sqlite UPLOAD_DIR=/seed/uploads \
         php classify_legacy.php; \
+    DB_DRIVER=sqlite DB_SQLITE_PATH=/seed/app.sqlite UPLOAD_DIR=/seed/uploads \
+        php import_tests.php; \
+    DB_DRIVER=sqlite DB_SQLITE_PATH=/seed/app.sqlite UPLOAD_DIR=/seed/uploads \
+        php pdf_to_markdown.php; \
     chown -R www-data:www-data /seed
 
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh

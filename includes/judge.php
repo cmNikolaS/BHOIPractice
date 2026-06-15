@@ -19,6 +19,29 @@ function judge_enabled(): bool
     return defined('JUDGE0_URL') && JUDGE0_URL !== '';
 }
 
+/** Max official tests evaluated per judge submission (bounds time + API cost). */
+function judge_max_tests(): int
+{
+    return max(1, (int) (getenv('JUDGE0_MAX_TESTS') ?: 20));
+}
+
+/** Fetch a file from the BHOI archive repo (raw.githubusercontent). null on failure. */
+function gh_raw(string $repoPath): ?string
+{
+    $base = 'https://raw.githubusercontent.com/BHOI/BHOI-takmicenja-iz-informatike/master/';
+    $url = $base . implode('/', array_map('rawurlencode', explode('/', $repoPath)));
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true, CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_SSL_VERIFYPEER => false, CURLOPT_CONNECTTIMEOUT => 10, CURLOPT_TIMEOUT => 30,
+        CURLOPT_USERAGENT => 'bhoi-judge/1.0',
+    ]);
+    $data = curl_exec($ch);
+    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    return ($data !== false && $code === 200) ? (string) $data : null;
+}
+
 /**
  * Languages we expose, mapped to Judge0 language ids. The default id targets
  * Judge0 Extra CE (C++ = Clang 10.0.1, id 2); override with JUDGE0_CPP_ID if

@@ -91,6 +91,16 @@ CREATE TABLE submissions (
 CREATE INDEX idx_sub_task ON submissions (task_id);
 CREATE INDEX idx_sub_ip ON submissions (ip, created_at);
 
+CREATE TABLE task_tests (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    task_id     INTEGER NOT NULL,
+    idx         INTEGER NOT NULL,
+    input_path  TEXT NOT NULL,
+    output_path TEXT NOT NULL,
+    FOREIGN KEY (task_id) REFERENCES tasks (id) ON UPDATE CASCADE ON DELETE CASCADE
+);
+CREATE INDEX idx_tasktests_task ON task_tests (task_id, idx);
+
 CREATE TABLE admins (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     username      TEXT NOT NULL UNIQUE,

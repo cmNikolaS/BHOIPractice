@@ -21,6 +21,8 @@ if [ ! -s "$DB_PATH" ]; then
         ( cd /var/www/html && php classify_tasks.php ) || echo "Classify finished with warnings."
         ( cd /var/www/html && php import_legacy.php ) || echo "Legacy import finished with warnings."
         ( cd /var/www/html && php classify_legacy.php ) || echo "Legacy classify finished with warnings."
+        ( cd /var/www/html && php import_tests.php ) || echo "Test import finished with warnings."
+        ( cd /var/www/html && php pdf_to_markdown.php ) || echo "PDF->markdown finished with warnings."
     fi
 fi
 
@@ -31,6 +33,7 @@ fi
 sqlite3 "$DB_PATH" "ALTER TABLE tasks ADD COLUMN difficulty_rating INTEGER NOT NULL DEFAULT 5" 2>/dev/null || true
 sqlite3 "$DB_PATH" "CREATE TABLE IF NOT EXISTS submissions (id INTEGER PRIMARY KEY AUTOINCREMENT, task_id INTEGER, language TEXT NOT NULL, source TEXT NOT NULL, status TEXT, time_ms INTEGER, memory_kb INTEGER, ip TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (task_id) REFERENCES tasks (id) ON UPDATE CASCADE ON DELETE SET NULL)" 2>/dev/null || true
 sqlite3 "$DB_PATH" "ALTER TABLE submissions ADD COLUMN ip TEXT" 2>/dev/null || true
+sqlite3 "$DB_PATH" "CREATE TABLE IF NOT EXISTS task_tests (id INTEGER PRIMARY KEY AUTOINCREMENT, task_id INTEGER NOT NULL, idx INTEGER NOT NULL, input_path TEXT NOT NULL, output_path TEXT NOT NULL, FOREIGN KEY (task_id) REFERENCES tasks (id) ON UPDATE CASCADE ON DELETE CASCADE)" 2>/dev/null || true
 
 # The web server owns the data it reads/writes (uploads, sqlite WAL).
 chown -R www-data:www-data "$DATA_DIR" || true
