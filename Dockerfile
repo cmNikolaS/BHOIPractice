@@ -32,6 +32,8 @@ RUN set -eux; \
         php import_bhoi.php; \
     DB_DRIVER=sqlite DB_SQLITE_PATH=/seed/app.sqlite UPLOAD_DIR=/seed/uploads \
         php classify_tasks.php; \
+    DB_DRIVER=sqlite DB_SQLITE_PATH=/seed/app.sqlite UPLOAD_DIR=/seed/uploads \
+        php import_legacy.php; \
     chown -R www-data:www-data /seed
 
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh

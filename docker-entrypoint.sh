@@ -19,6 +19,7 @@ if [ ! -s "$DB_PATH" ]; then
         sqlite3 "$DB_PATH" < /var/www/html/schema.sqlite.sql
         ( cd /var/www/html && php import_bhoi.php ) || echo "Import finished with warnings."
         ( cd /var/www/html && php classify_tasks.php ) || echo "Classify finished with warnings."
+        ( cd /var/www/html && php import_legacy.php ) || echo "Legacy import finished with warnings."
     fi
 fi
 
