@@ -24,6 +24,7 @@ $page_title = $page_title ?? APP_NAME;
         </a>
         <nav class="flex flex-wrap items-center justify-end gap-x-1 gap-y-1 text-sm font-medium">
             <a href="<?= e(url('index.php')) ?>" class="rounded-lg px-3 py-2 text-muted transition hover:bg-elevated hover:text-fg">Zadaci</a>
+            <a href="<?= e(url('about.php')) ?>" class="rounded-lg px-3 py-2 text-muted transition hover:bg-elevated hover:text-fg">O sajtu</a>
             <?php if (function_exists('is_user') && is_user()): ?>
                 <span class="rounded-lg px-3 py-2 font-semibold text-fg">👤 <?= e(current_user()['username']) ?></span>
                 <a href="<?= e(url('logout.php')) ?>" class="rounded-lg px-3 py-2 text-muted transition hover:bg-elevated hover:text-fg">Odjava</a>
