@@ -19,7 +19,13 @@ config.local.php
 # Local preview launch config (machine-specific paths)
 /.claude/launch.json
 
-# Editor / OS noise
+# Editor / IDE
+.vs/
+.vscode/
+*.code-workspace
+.idea/
+
+# OS noise
 .DS_Store
 Thumbs.db
 *.log
